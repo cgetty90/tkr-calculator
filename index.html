@@ -23,6 +23,11 @@
     .muted { opacity:.85; font-size:12px; }
     .row { display:flex; gap:10px; align-items:end; }
     .row > * { flex: 1; }
+    .gameRow { border:1px solid #1f2a3a; border-radius:12px; padding:12px; margin-bottom:10px; background:#0c1421; }
+    .gameHead { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .gameHead strong { font-size:14px; }
+    .inlineBtn { width:auto; padding:8px 10px; }
+    .right { text-align:right; }
   </style>
 </head>
 <body>
@@ -32,26 +37,13 @@
 <div class="card">
   <h3 style="margin-top:0;">Team Selection (4 slots)</h3>
 
-  <!-- Searchable inputs using a shared datalist -->
   <datalist id="playersList"></datalist>
 
   <div class="grid grid-4">
-    <div>
-      <label>Player 1</label>
-      <input id="p1" list="playersList" placeholder="Type a name (or NONE)"/>
-    </div>
-    <div>
-      <label>Player 2</label>
-      <input id="p2" list="playersList" placeholder="Type a name (or NONE)"/>
-    </div>
-    <div>
-      <label>Player 3</label>
-      <input id="p3" list="playersList" placeholder="Type a name (or NONE)"/>
-    </div>
-    <div>
-      <label>Player 4</label>
-      <input id="p4" list="playersList" placeholder="Type a name (or NONE)"/>
-    </div>
+    <div><label>Player 1</label><input id="p1" list="playersList" placeholder="Type a name (or NONE)"/></div>
+    <div><label>Player 2</label><input id="p2" list="playersList" placeholder="Type a name (or NONE)"/></div>
+    <div><label>Player 3</label><input id="p3" list="playersList" placeholder="Type a name (or NONE)"/></div>
+    <div><label>Player 4</label><input id="p4" list="playersList" placeholder="Type a name (or NONE)"/></div>
   </div>
 
   <div style="margin-top:10px">
@@ -62,7 +54,7 @@
 
   <div class="muted" style="margin-top:8px;">
     Tip: start typing to filter the name list. Leave a slot blank or type <b>NONE</b> to count rank as 0.
-    If you have exactly <b>3 real players</b> (one NONE/blank), the app adds <b>+0.15</b> to every placement multiplier.
+    If you have exactly <b>3 real players</b>, the app adds <b>+0.15</b> to every placement multiplier.
   </div>
 </div>
 
@@ -80,10 +72,10 @@
     </div>
 
     <div>
-      <label>Target total score (all games)</label>
+      <label>Target total score (best 4 games)</label>
       <input id="targetTotal" type="number" min="0" step="0.01" value="180"/>
       <div class="muted" style="margin-top:6px;">
-        Max games: <b>4</b> (target per-game = target/4). Max points per game = <b>45</b>.
+        Counted games: <b>best 4</b>. Max points/game = <b>45</b>.
       </div>
     </div>
   </div>
@@ -93,17 +85,21 @@
 </div>
 
 <div class="card">
-  <h3 style="margin-top:0;">Games (max 4)</h3>
-  <button onclick="addGame()">Add Game</button>
+  <h3 style="margin-top:0;">Games (unlimited entries, counts best 4)</h3>
+  <button id="addGameBtn">Add Game</button>
   <div id="games" style="margin-top:10px;"></div>
   <div style="margin-top:10px">
-    <span class="pill">Total Points: <b id="totalPoints">0</b></span>
-    <span class="pill">Remaining Possible: <b id="remainingPoints">180</b></span>
+    <span class="pill">Best 4 Total: <b id="best4Total">0.00</b></span>
+    <span class="pill">Remaining Possible: <b id="remainingPossible">180.00</b></span>
+    <span class="pill">Games Entered: <b id="gamesEntered">0</b></span>
+  </div>
+  <div class="muted" style="margin-top:8px;">
+    Games are displayed sorted by points (highest first). While typing kills, sorting waits until you finish (blur/change) so it won’t kick you out.
   </div>
 </div>
 
 <script>
-const MAX_GAMES = 4;
+const COUNTED_GAMES = 4;
 const MAX_POINTS = 45;
 
 const PLACEMENTS = [
@@ -118,8 +114,12 @@ const MILESTONES = [60,70,75,80,85,95,100];
 
 let rankings = [];
 let rankByNameLower = new Map(); // lower(name) -> rank
-let displayByNameLower = new Map(); // lower(name) -> canonical name
+
+// Game objects: {id, killsStr, killsInt, placement, points}
+// We keep DOM nodes stable to avoid focus loss while typing.
 let games = [];
+let gameNodes = new Map(); // id -> element
+let nextGameId = 1;
 
 function milestonePoints(kills){
   const k = (typeof kills === "number" && isFinite(kills)) ? kills : 0;
@@ -165,7 +165,6 @@ async function loadCSV() {
 
   rankings = [];
   rankByNameLower = new Map();
-  displayByNameLower = new Map();
 
   lines.forEach(l=>{
     const cols = parseCSVLine(l);
@@ -174,10 +173,7 @@ async function loadCSV() {
     if (!name) return;
     const r = isFinite(rank) ? rank : 0;
     rankings.push({ name, rank: r });
-
-    const key = name.toLowerCase();
-    rankByNameLower.set(key, r);
-    displayByNameLower.set(key, name);
+    rankByNameLower.set(name.toLowerCase(), r);
   });
 
   rankings.sort((a,b)=>a.name.localeCompare(b.name, undefined, {sensitivity:"base"}));
@@ -185,24 +181,22 @@ async function loadCSV() {
   fillPlacements();
   hookInputs();
   document.getElementById("milestonesLabel").value = MILESTONES.join(", ");
-  updateTeam();
+  updateTeam(true);
 }
 
 function buildDatalist(){
   const dl = document.getElementById("playersList");
   dl.innerHTML = "";
 
-  // NONE option
   const none = document.createElement("option");
   none.value = "NONE";
   none.label = "NONE (0)";
   dl.appendChild(none);
 
-  // Player options: show rank in label
   rankings.forEach(r=>{
     const opt = document.createElement("option");
-    opt.value = r.name;                // value user selects/types
-    opt.label = `${r.name} (${r.rank})`; // what shows in suggestion list
+    opt.value = r.name;
+    opt.label = `${r.name} (${r.rank})`;
     dl.appendChild(opt);
   });
 }
@@ -217,26 +211,28 @@ function fillPlacements(){
     s.appendChild(o);
   });
   s.value = "1st";
-  s.onchange = () => { updateTeam(); };
+  s.addEventListener("change", () => updateTeam(true));
 }
 
 function hookInputs(){
   ["p1","p2","p3","p4"].forEach(id=>{
     const el = document.getElementById(id);
-    el.addEventListener("input", () => updateTeam());
-    el.addEventListener("change", () => updateTeam());
+    el.addEventListener("input", () => updateTeam(false));
+    el.addEventListener("change", () => updateTeam(true));
+    el.addEventListener("blur", () => updateTeam(true));
   });
 
   document.getElementById("targetTotal").addEventListener("input", () => {
     const rankTxt = document.getElementById("teamRank").textContent;
     if (rankTxt !== "–") calcKillsNeededBlocks(parseFloat(rankTxt), parseInt(document.getElementById("realPlayers").textContent || "0", 10));
   });
+
+  document.getElementById("addGameBtn").addEventListener("click", () => addGame());
 }
 
 function normalizeName(raw){
   let v = String(raw ?? "").trim();
   if (!v) return "";
-  // allow user to paste "Name (22)" -> strip the bracket part
   const idx = v.lastIndexOf(" (");
   if (idx > 0 && v.endsWith(")")) v = v.slice(0, idx).trim();
   return v;
@@ -252,8 +248,7 @@ function computeTeam(){
     if (!typed) return;
     if (typed.toLowerCase() === "none") return;
 
-    const key = typed.toLowerCase();
-    const r = rankByNameLower.get(key);
+    const r = rankByNameLower.get(typed.toLowerCase());
     if (typeof r === "number"){
       teamRank += r;
       realPlayers += 1;
@@ -282,7 +277,7 @@ function minKillsForTarget(perGameTarget, placementKey, teamRank, realPlayers){
   return null;
 }
 
-function updateTeam() {
+function updateTeam(forceSort){
   const { teamRank, realPlayers } = computeTeam();
   document.getElementById("realPlayers").textContent = String(realPlayers);
 
@@ -291,7 +286,7 @@ function updateTeam() {
     document.getElementById("divisor").textContent="–";
     document.getElementById("killsNeeded45").textContent="Select players to calculate";
     document.getElementById("killsNeededTarget").textContent="—";
-    recalc();
+    recalc(forceSort);
     return;
   }
 
@@ -299,7 +294,7 @@ function updateTeam() {
   document.getElementById("divisor").textContent = (teamRank*0.1).toFixed(2);
 
   calcKillsNeededBlocks(teamRank, realPlayers);
-  recalc();
+  recalc(forceSort);
 }
 
 function calcKillsNeededBlocks(teamRank, realPlayers){
@@ -316,7 +311,7 @@ function calcKillsNeededBlocks(teamRank, realPlayers){
      </div>`;
 
   const targetTotal = parseFloat(document.getElementById("targetTotal").value || "0");
-  const perGameTarget = targetTotal / MAX_GAMES;
+  const perGameTarget = targetTotal / COUNTED_GAMES;
 
   if (!isFinite(targetTotal) || targetTotal < 0){
     document.getElementById("killsNeededTarget").innerHTML = `<span class="muted">Enter a valid target total.</span>`;
@@ -330,98 +325,159 @@ function calcKillsNeededBlocks(teamRank, realPlayers){
 
   const kTarget = minKillsForTarget(perGameTarget, placementKey, teamRank, realPlayers);
   document.getElementById("killsNeededTarget").innerHTML =
-    `<b>${kTarget ?? "—"}</b> kills/game to average <b>${perGameTarget.toFixed(2)}</b> points/game (target total <b>${targetTotal.toFixed(2)}</b> over ${MAX_GAMES} games), as <b>${placementLabel}</b>.`;
+    `<b>${kTarget ?? "—"}</b> kills/game to average <b>${perGameTarget.toFixed(2)}</b> points/game (target total <b>${targetTotal.toFixed(2)}</b>), as <b>${placementLabel}</b>.`;
 }
 
 function addGame(){
-  if (games.length >= MAX_GAMES) return;
-  games.push({ kills: null, placement: "1st", points: 0 });
-  renderGames();
-  recalc();
+  const id = nextGameId++;
+  const g = { id, killsStr: "", killsInt: null, placement: "1st", points: 0 };
+  games.push(g);
+
+  const node = createGameNode(g);
+  gameNodes.set(id, node);
+  document.getElementById("games").appendChild(node);
+
+  recalc(true);
 }
 
-function removeGame(i){
-  games.splice(i,1);
-  renderGames();
-  recalc();
-}
+function createGameNode(g){
+  const wrapper = document.createElement("div");
+  wrapper.className = "gameRow";
+  wrapper.dataset.gameId = String(g.id);
 
-function updateGameKills(i, val){
-  const v = String(val ?? "").trim();
-  if (v === ""){
-    games[i].kills = null;
-  } else {
-    games[i].kills = Math.max(0, parseInt(v, 10));
-    if (!isFinite(games[i].kills)) games[i].kills = null;
-  }
-  recalc();
-}
+  wrapper.innerHTML = `
+    <div class="gameHead">
+      <strong id="title-${g.id}">Game</strong>
+      <button class="inlineBtn" id="remove-${g.id}">Remove</button>
+    </div>
 
-function updateGamePlacement(i, val){
-  games[i].placement = val;
-  recalc();
-}
-
-function renderGames(){
-  const gDiv = document.getElementById("games");
-  gDiv.innerHTML = "";
-  games.forEach((g,i)=>{
-    const d = document.createElement("div");
-    d.className = "card";
-    d.style.marginBottom = "10px";
-
-    const placementOptions = PLACEMENTS.map(p => {
-      const sel = (p.key === g.placement) ? "selected" : "";
-      return `<option value="${p.key}" ${sel}>${p.label}</option>`;
-    }).join("");
-
-    const killsValue = (g.kills === null || typeof g.kills === "undefined") ? "" : String(g.kills);
-
-    d.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-        <div style="font-weight:700;">Game ${i+1}</div>
-        <button style="width:auto;" onclick="removeGame(${i})">Remove</button>
+    <div class="row" style="margin-top:10px;">
+      <div>
+        <label>Total team kills (combined)</label>
+        <input type="number" min="0" placeholder="Enter kills" id="kills-${g.id}" value="">
       </div>
-
-      <div class="row" style="margin-top:10px;">
-        <div>
-          <label>Total team kills (combined)</label>
-          <input type="number" min="0" placeholder="Enter kills" value="${killsValue}"
-                 onchange="updateGameKills(${i}, this.value)" oninput="updateGameKills(${i}, this.value)">
-        </div>
-        <div>
-          <label>Placement</label>
-          <select onchange="updateGamePlacement(${i}, this.value)">${placementOptions}</select>
-        </div>
+      <div>
+        <label>Placement</label>
+        <select id="place-${g.id}"></select>
       </div>
+    </div>
 
-      <div class="muted" style="margin-top:8px;">
-        Milestone points: <b>${milestonePoints(g.kills)}</b>
-        &nbsp;|&nbsp; Game points: <b>${g.points.toFixed(2)}</b> (capped at 45)
-      </div>
-    `;
-    gDiv.appendChild(d);
+    <div class="muted" style="margin-top:8px;">
+      Milestone points: <b id="mile-${g.id}">0</b>
+      &nbsp;|&nbsp; Game points: <b id="pts-${g.id}">0.00</b> (capped at 45)
+    </div>
+  `;
+
+  const placeSel = wrapper.querySelector(`#place-${g.id}`);
+  PLACEMENTS.forEach(p=>{
+    const opt = document.createElement("option");
+    opt.value = p.key;
+    opt.textContent = p.label;
+    placeSel.appendChild(opt);
   });
+  placeSel.value = g.placement;
+
+  // Remove
+  wrapper.querySelector(`#remove-${g.id}`).addEventListener("click", () => {
+    games = games.filter(x => x.id !== g.id);
+    const node = gameNodes.get(g.id);
+    if (node) node.remove();
+    gameNodes.delete(g.id);
+    recalc(true);
+  });
+
+  const killsInput = wrapper.querySelector(`#kills-${g.id}`);
+
+  // On input: update without sorting (prevents focus loss / "backs out")
+  killsInput.addEventListener("input", (e) => {
+    const val = String(e.target.value ?? "");
+    g.killsStr = val;
+    const t = val.trim();
+    if (t === ""){
+      g.killsInt = null;
+    } else {
+      const n = parseInt(t, 10);
+      g.killsInt = (isFinite(n) ? Math.max(0, n) : null);
+    }
+    recalc(false);
+  });
+
+  // On blur/change: allow sorting
+  killsInput.addEventListener("change", () => recalc(true));
+  killsInput.addEventListener("blur", () => recalc(true));
+
+  placeSel.addEventListener("change", (e) => {
+    g.placement = e.target.value;
+    recalc(true);
+  });
+
+  return wrapper;
 }
 
-function recalc(){
+function recalc(forceSort){
   const rankTxt = document.getElementById("teamRank").textContent;
   const realPlayers = parseInt(document.getElementById("realPlayers").textContent || "0", 10);
-  let total = 0;
 
-  if (rankTxt !== "–"){
-    const teamRank = parseFloat(rankTxt);
-    games.forEach(g=>{
-      g.points = gamePointsFromKills(g.kills, g.placement, teamRank, realPlayers);
-      total += g.points;
+  let teamRank = null;
+  if (rankTxt !== "–") teamRank = parseFloat(rankTxt);
+
+  // compute points for each game, update UI for each game row (no re-render)
+  games.forEach(g=>{
+    const kills = (typeof g.killsInt === "number") ? g.killsInt : 0;
+    if (teamRank && teamRank > 0){
+      g.points = gamePointsFromKills(kills, g.placement, teamRank, realPlayers);
+    } else {
+      g.points = 0;
+    }
+    const node = gameNodes.get(g.id);
+    if (node){
+      node.querySelector(`#mile-${g.id}`).textContent = String(milestonePoints(kills));
+      node.querySelector(`#pts-${g.id}`).textContent = g.points.toFixed(2);
+    }
+  });
+
+  // best 4 total
+  const sortedByPts = [...games].sort((a,b) => (b.points - a.points) || (a.id - b.id));
+  const best4 = sortedByPts.slice(0, COUNTED_GAMES);
+  const best4Total = best4.reduce((s,g)=>s+g.points,0);
+
+  const maxTotal = COUNTED_GAMES * MAX_POINTS;
+  const remaining = Math.max(0, maxTotal - best4Total);
+
+  document.getElementById("best4Total").textContent = best4Total.toFixed(2);
+  document.getElementById("remainingPossible").textContent = remaining.toFixed(2);
+  document.getElementById("gamesEntered").textContent = String(games.length);
+
+  // Sort display order by points (if requested)
+  if (forceSort){
+    const active = document.activeElement;
+    const activeInfo = active ? {
+      id: active.id,
+      start: (active.selectionStart ?? null),
+      end: (active.selectionEnd ?? null),
+    } : null;
+
+    const container = document.getElementById("games");
+    // Re-order existing nodes (no recreation)
+    sortedByPts.forEach((g, idx) => {
+      const node = gameNodes.get(g.id);
+      if (node) container.appendChild(node);
+      // Title shows rank in list
+      const title = node ? node.querySelector(`#title-${g.id}`) : null;
+      if (title) title.textContent = `Game (Rank ${idx+1})`;
     });
-  } else {
-    games.forEach(g=>g.points = 0);
-  }
 
-  document.getElementById("totalPoints").textContent = total.toFixed(2);
-  document.getElementById("remainingPoints").textContent = String(MAX_POINTS * (MAX_GAMES - games.length));
-  renderGames();
+    // Restore focus/caret if possible
+    if (activeInfo && activeInfo.id){
+      const el = document.getElementById(activeInfo.id);
+      if (el){
+        el.focus({ preventScroll: true });
+        if (typeof activeInfo.start === "number" && typeof activeInfo.end === "number"){
+          try { el.setSelectionRange(activeInfo.start, activeInfo.end); } catch {}
+        }
+      }
+    }
+  }
 }
 
 loadCSV().catch(e=>alert(e.message));
