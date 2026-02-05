@@ -6,21 +6,23 @@
   <title>The Krew – TKR Scoring Guide</title>
   <style>
     :root{
-      --bg:#05060c;
-      --text:#f5f7ff;
-      --muted: rgba(245,247,255,.78);
+      --bg:#04040a;
+      --text:#f4f7ff;
+      --muted: rgba(244,247,255,.72);
 
-      --card: rgba(12,14,26,.90);
-      --card2: rgba(8,10,20,.94);
+      --card: rgba(10,12,22,.88);
+      --card2: rgba(7,9,18,.92);
 
-      --border: rgba(64, 200, 255, .28);
-      --border2: rgba(64, 200, 255, .55);
-      --glow: rgba(64, 200, 255, .14);
+      --accent:#41d3ff;          /* arena cyan */
+      --accent2:#a855f7;         /* plasma violet */
+      --border: rgba(65, 211, 255, .22);
+      --border2: rgba(65, 211, 255, .55);
+      --glow: rgba(65, 211, 255, .16);
 
-      --btn: rgba(64, 200, 255, .14);
-      --btnHover: rgba(64, 200, 255, .22);
+      --btn: rgba(65, 211, 255, .14);
+      --btnHover: rgba(65, 211, 255, .22);
 
-      --pillBg: rgba(8,10,20,.96);
+      --pillBg: rgba(7,9,18,.96);
     }
 
     *{ box-sizing:border-box; }
@@ -42,7 +44,7 @@
       border-radius:12px;
       padding:12px;
       margin-bottom:14px;
-      box-shadow: 0 0 0 1px var(--glow), 0 10px 34px rgba(0,0,0,.55);
+      box-shadow: 0 0 0 1px var(--glow), 0 8px 30px rgba(0,0,0,.45);
       backdrop-filter: blur(6px);
     }
 
@@ -60,25 +62,25 @@
       border:1px solid var(--border2);
       background:var(--card2);
       color:var(--text);
-      box-shadow: 0 0 0 1px rgba(64, 200, 255, .10), 0 0 10px rgba(64, 200, 255, .08);
+      box-shadow: 0 0 0 1px rgba(176, 80, 255, .10), 0 0 18px rgba(176, 80, 255, .10);
       outline:none;
       font-size:14px;
     }
 
     input:focus, select:focus{
-      box-shadow: 0 0 0 2px rgba(64, 200, 255, .28), 0 0 14px rgba(64, 200, 255, .12);
+      box-shadow: 0 0 0 2px rgba(176, 80, 255, .35), 0 0 26px rgba(176, 80, 255, .18);
     }
 
     button{
       cursor:pointer;
       background:var(--btn);
-      border:1px solid rgba(64, 200, 255,.85);
+      border:1px solid rgba(176,80,255,.85);
       color:var(--text);
-      box-shadow: 0 0 18px rgba(64, 200, 255,.16);
+      box-shadow: 0 0 18px rgba(176,80,255,.16);
     }
     button:hover{
       background:var(--btnHover);
-      box-shadow: 0 0 26px rgba(64, 200, 255,.22);
+      box-shadow: 0 0 26px rgba(176,80,255,.22);
     }
 
     .grid{ display:grid; gap:16px; }
@@ -118,7 +120,7 @@
       padding:10px;
       margin-bottom:10px;
       background:var(--card2);
-      box-shadow: 0 0 0 1px rgba(64, 200, 255,.18), 0 0 22px rgba(64, 200, 255,.10);
+      box-shadow: 0 0 0 1px rgba(176,80,255,.18), 0 0 22px rgba(176,80,255,.10);
     }
 
     .gameHead{
@@ -150,68 +152,191 @@
       border-radius:12px;
       z-index:999;
       display:none;
-      box-shadow: 0 0 0 1px rgba(64, 200, 255,.14), 0 16px 40px rgba(0,0,0,.55);
+      box-shadow: 0 0 0 1px rgba(176,80,255,.14), 0 16px 40px rgba(0,0,0,.55);
     }
     .suggestionItem{
       padding:8px 10px;
       cursor:pointer;
-      border-bottom:1px solid rgba(64, 200, 255,.18);
+      border-bottom:1px solid rgba(176,80,255,.18);
       font-size:13px;
       line-height:1.2;
     }
     .suggestionItem:last-child{ border-bottom:none; }
     .suggestionItem:hover, .suggestionItem.active{
-      background: rgba(64, 200, 255, .14);
+      background: rgba(176, 80, 255, .14);
     }
     .suggestionMeta{ color: var(--muted); font-size:12px; margin-left:6px; }
 
     .spacer8{ height:8px; }
     .spacer10{ height:10px; }
   
-/* === Cinematic Esports Theme Enhancements === */
+/* === Arena Energy Theme === */
 
-/* Ambient background lighting */
+/* Animated arena glow */
 body::before{
   content:"";
   position:fixed;
-  inset:-20%;
+  inset:-30%;
   background:
-    radial-gradient(circle at 15% 10%, rgba(64,200,255,.08), transparent 35%),
-    radial-gradient(circle at 85% 80%, rgba(64,200,255,.06), transparent 40%);
+    radial-gradient(circle at 20% 15%, rgba(65,211,255,.12), transparent 40%),
+    radial-gradient(circle at 80% 85%, rgba(168,85,247,.10), transparent 45%),
+    radial-gradient(circle at 60% 30%, rgba(65,211,255,.06), transparent 50%);
+  filter: blur(2px);
+  pointer-events:none;
+  z-index:-2;
+  animation: arenaDrift 18s ease-in-out infinite;
+}
+@keyframes arenaDrift{
+  0%,100%{ transform: translate3d(0,0,0) scale(1); }
+  50%{ transform: translate3d(-2%,1%,0) scale(1.02); }
+}
+
+/* Subtle scanlines */
+body::after{
+  content:"";
+  position:fixed;
+  inset:0;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255,255,255,.03) 0px,
+    rgba(255,255,255,.03) 1px,
+    transparent 3px,
+    transparent 6px
+  );
+  opacity:.10;
+  mix-blend-mode: overlay;
   pointer-events:none;
   z-index:-1;
 }
 
-/* Card depth + glass */
+/* Cards feel like panels */
 .card{
-  background: linear-gradient(180deg, rgba(14,18,34,.94), rgba(8,10,20,.88));
-  backdrop-filter: blur(14px) saturate(120%);
+  background: linear-gradient(180deg, rgba(10,12,22,.92), rgba(7,9,18,.86));
+  border: 1px solid rgba(65,211,255,.18);
+  box-shadow:
+    0 0 0 1px rgba(65,211,255,.10),
+    0 18px 50px rgba(0,0,0,.62);
+  position:relative;
+  overflow:hidden;
+}
+.card::before{
+  content:"";
+  position:absolute;
+  inset:-2px;
+  background: linear-gradient(90deg, rgba(65,211,255,.0), rgba(65,211,255,.10), rgba(168,85,247,.08), rgba(65,211,255,.0));
+  opacity:.55;
+  transform: translateX(-60%);
+  animation: sheen 10s linear infinite;
+  pointer-events:none;
+}
+@keyframes sheen{
+  0%{ transform: translateX(-60%); }
+  100%{ transform: translateX(60%); }
 }
 
 /* Headings */
-h1, h3{
+h1{
   text-transform: uppercase;
-  letter-spacing: .5px;
+  letter-spacing: .6px;
+  text-shadow: 0 0 22px rgba(65,211,255,.18);
+}
+h3{
+  text-transform: uppercase;
+  letter-spacing:.4px;
 }
 
-/* Subtle pulse for active helper */
-@keyframes softPulse{
-  0%,100%{ box-shadow:0 0 0 1px var(--glow); }
-  50%{ box-shadow:0 0 14px var(--glow); }
+/* Inputs: less border, more focus energy */
+input, select{
+  border: 1px solid rgba(65,211,255,.26);
+  box-shadow: 0 0 10px rgba(65,211,255,.06);
 }
-.pulse{
-  animation: softPulse 7s ease-in-out infinite;
+input:focus, select:focus{
+  border-color: rgba(65,211,255,.65);
+  box-shadow: 0 0 0 2px rgba(65,211,255,.22), 0 0 16px rgba(65,211,255,.14);
 }
 
-/* Heat colouring (applied via JS) */
-.game-hot{ border-color:#40c8ff !important; }
-.game-mid{ border-color:#2aa6d6 !important; }
-.game-low{ border-color:#1e6f8f !important; }
+/* Buttons */
+button{
+  border:1px solid rgba(65,211,255,.60);
+  box-shadow: 0 0 18px rgba(65,211,255,.10);
+}
+button:hover{
+  box-shadow: 0 0 26px rgba(65,211,255,.18);
+}
 
-/* Match-ready dim */
-.dimmed{
-  opacity:.25;
-  filter: blur(1px);
+/* Pills */
+.pill{
+  border-color: rgba(65,211,255,.50);
+  box-shadow: 0 0 14px rgba(65,211,255,.08);
+}
+
+/* Progress meter */
+.meterWrap{
+  margin-top:10px;
+  padding:10px;
+  border-radius:14px;
+  border:1px solid rgba(65,211,255,.22);
+  background: linear-gradient(180deg, rgba(7,9,18,.92), rgba(6,7,14,.92));
+  box-shadow: 0 0 18px rgba(65,211,255,.08);
+}
+.meterTop{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+}
+.meterBar{
+  height:12px;
+  border-radius:999px;
+  background: rgba(255,255,255,.06);
+  border:1px solid rgba(65,211,255,.18);
+  overflow:hidden;
+}
+.meterFill{
+  height:100%;
+  width:0%;
+  border-radius:999px;
+  background: linear-gradient(90deg, rgba(65,211,255,.95), rgba(168,85,247,.75));
+  box-shadow: 0 0 22px rgba(65,211,255,.18);
+  transition: width .35s ease;
+}
+.meterMeta{
+  font-size:12px;
+  color: var(--muted);
+}
+
+/* Game heat + counted */
+.gameRow{
+  border-color: rgba(255,255,255,.10);
+}
+.gameRow.counted{
+  border-color: rgba(65,211,255,.55);
+  box-shadow: 0 0 0 1px rgba(65,211,255,.14), 0 0 22px rgba(65,211,255,.10);
+}
+.gameRow.game-hot{
+  border-color: rgba(65,211,255,.75) !important;
+  box-shadow: 0 0 0 1px rgba(65,211,255,.18), 0 0 28px rgba(65,211,255,.14);
+}
+.gameRow.game-mid{
+  border-color: rgba(65,211,255,.40) !important;
+}
+.gameRow.game-low{
+  border-color: rgba(255,255,255,.12) !important;
+}
+.badge{
+  display:inline-block;
+  margin-left:8px;
+  padding:3px 8px;
+  border-radius:999px;
+  font-size:12px;
+  border:1px solid rgba(65,211,255,.45);
+  background: rgba(7,9,18,.92);
+  color: var(--text);
+}
+.badge.top{
+  border-color: rgba(65,211,255,.70);
+  box-shadow: 0 0 18px rgba(65,211,255,.12);
 }
 
 </style>
@@ -302,6 +427,15 @@ h1, h3{
     <span class="pill">Best 4 Total: <b id="best4Total">0.00</b></span>
     <span class="pill">Remaining Possible: <b id="remainingPossible">180.00</b></span>
     <span class="pill">Games Entered: <b id="gamesEntered">0</b></span>
+  </div>
+
+  <div class="meterWrap" id="meterWrap">
+    <div class="meterTop">
+      <div class="meterMeta"><b>Target Progress</b> — best 4 vs target</div>
+      <div class="meterMeta">Best 4: <b id="meterBest4">0.00</b> / Target: <b id="meterTarget">180.00</b></div>
+    </div>
+    <div class="spacer8"></div>
+    <div class="meterBar"><div class="meterFill" id="meterFill"></div></div>
   </div>
 
   <div class="spacer8"></div>
@@ -807,6 +941,11 @@ function updateReplacementHelper(){
   const sorted = [...games].sort((a,b)=> (b.points - a.points) || (a.id - b.id));
   const best4 = sorted.slice(0, 4);
   const best4Total = best4.reduce((s,g)=>s+g.points, 0);
+  const meterWrap = document.getElementById("meterWrap");
+  if(meterWrap){
+    meterWrap.classList.toggle("pulse", best4Total < targetTotal);
+  }
+
 
   const fourth = best4[3];
   const fourthPts = fourth ? fourth.points : 0;
@@ -1012,6 +1151,49 @@ function recalc(forceSort){
   document.getElementById("best4Total").textContent = best4Total.toFixed(2);
   document.getElementById("remainingPossible").textContent = remaining.toFixed(2);
   document.getElementById("gamesEntered").textContent = String(games.length);
+  // Mark counted (top 4) games + heat colouring
+  const topIds = new Set(best4.map(g => g.id));
+  sortedByPts.forEach((g) => {
+    const node = gameNodes.get(g.id);
+    if(!node) return;
+
+    node.classList.toggle("counted", topIds.has(g.id));
+
+    // Heat based on points
+    node.classList.remove("game-hot","game-mid","game-low");
+    if(g.points >= 44){
+      node.classList.add("game-hot");
+    }else if(g.points >= 30){
+      node.classList.add("game-mid");
+    }else{
+      node.classList.add("game-low");
+    }
+
+    // Add/remove badge in title
+    const title = node.querySelector(`#title-${g.id}`);
+    if(title){
+      // keep existing "Game (Rank X)" text, then badge
+      title.querySelectorAll(".badge").forEach(b => b.remove());
+      const badge = document.createElement("span");
+      badge.className = "badge" + (topIds.has(g.id) ? " top" : "");
+      badge.textContent = topIds.has(g.id) ? "COUNTED" : "EXTRA";
+      title.appendChild(badge);
+    }
+  });
+
+  // Update target progress meter
+  const tgt = parseFloat(document.getElementById("targetTotal").value || String(COUNTED_GAMES * MAX_POINTS));
+  const meterBest4 = document.getElementById("meterBest4");
+  const meterTarget = document.getElementById("meterTarget");
+  const meterFill = document.getElementById("meterFill");
+  if(meterBest4) meterBest4.textContent = best4Total.toFixed(2);
+  if(meterTarget) meterTarget.textContent = (isFinite(tgt) ? tgt.toFixed(2) : (COUNTED_GAMES * MAX_POINTS).toFixed(2));
+  if(meterFill){
+    const denom = (isFinite(tgt) && tgt > 0) ? tgt : (COUNTED_GAMES * MAX_POINTS);
+    const pct = Math.max(0, Math.min(100, (best4Total / denom) * 100));
+    meterFill.style.width = pct.toFixed(1) + "%";
+  }
+
 
   if(forceSort){
     // preserve focus/caret if typing
