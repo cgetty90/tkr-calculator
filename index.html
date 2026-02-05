@@ -6,21 +6,21 @@
   <title>The Krew – TKR Scoring Guide</title>
   <style>
     :root{
-      --bg:#06030b;
-      --text:#ffffff;
-      --muted: rgba(255,255,255,.82);
+      --bg:#05060c;
+      --text:#f5f7ff;
+      --muted: rgba(245,247,255,.78);
 
-      --card: rgba(15,10,26,.82);
-      --card2: rgba(10,6,18,.92);
+      --card: rgba(12,14,26,.90);
+      --card2: rgba(8,10,20,.94);
 
-      --border: rgba(176, 80, 255, .45);
-      --border2: rgba(176, 80, 255, .78);
-      --glow: rgba(176, 80, 255, .35);
+      --border: rgba(64, 200, 255, .28);
+      --border2: rgba(64, 200, 255, .55);
+      --glow: rgba(64, 200, 255, .14);
 
-      --btn: rgba(176, 80, 255, .18);
-      --btnHover: rgba(176, 80, 255, .28);
+      --btn: rgba(64, 200, 255, .14);
+      --btnHover: rgba(64, 200, 255, .22);
 
-      --pillBg: rgba(10,6,18,.95);
+      --pillBg: rgba(8,10,20,.96);
     }
 
     *{ box-sizing:border-box; }
@@ -42,7 +42,7 @@
       border-radius:12px;
       padding:12px;
       margin-bottom:14px;
-      box-shadow: 0 0 0 1px var(--glow), 0 8px 30px rgba(0,0,0,.45);
+      box-shadow: 0 0 0 1px var(--glow), 0 10px 34px rgba(0,0,0,.55);
       backdrop-filter: blur(6px);
     }
 
@@ -60,25 +60,25 @@
       border:1px solid var(--border2);
       background:var(--card2);
       color:var(--text);
-      box-shadow: 0 0 0 1px rgba(176, 80, 255, .10), 0 0 18px rgba(176, 80, 255, .10);
+      box-shadow: 0 0 0 1px rgba(64, 200, 255, .10), 0 0 10px rgba(64, 200, 255, .08);
       outline:none;
       font-size:14px;
     }
 
     input:focus, select:focus{
-      box-shadow: 0 0 0 2px rgba(176, 80, 255, .35), 0 0 26px rgba(176, 80, 255, .18);
+      box-shadow: 0 0 0 2px rgba(64, 200, 255, .28), 0 0 14px rgba(64, 200, 255, .12);
     }
 
     button{
       cursor:pointer;
       background:var(--btn);
-      border:1px solid rgba(176,80,255,.85);
+      border:1px solid rgba(64, 200, 255,.85);
       color:var(--text);
-      box-shadow: 0 0 18px rgba(176,80,255,.16);
+      box-shadow: 0 0 18px rgba(64, 200, 255,.16);
     }
     button:hover{
       background:var(--btnHover);
-      box-shadow: 0 0 26px rgba(176,80,255,.22);
+      box-shadow: 0 0 26px rgba(64, 200, 255,.22);
     }
 
     .grid{ display:grid; gap:16px; }
@@ -118,7 +118,7 @@
       padding:10px;
       margin-bottom:10px;
       background:var(--card2);
-      box-shadow: 0 0 0 1px rgba(176,80,255,.18), 0 0 22px rgba(176,80,255,.10);
+      box-shadow: 0 0 0 1px rgba(64, 200, 255,.18), 0 0 22px rgba(64, 200, 255,.10);
     }
 
     .gameHead{
@@ -150,18 +150,18 @@
       border-radius:12px;
       z-index:999;
       display:none;
-      box-shadow: 0 0 0 1px rgba(176,80,255,.14), 0 16px 40px rgba(0,0,0,.55);
+      box-shadow: 0 0 0 1px rgba(64, 200, 255,.14), 0 16px 40px rgba(0,0,0,.55);
     }
     .suggestionItem{
       padding:8px 10px;
       cursor:pointer;
-      border-bottom:1px solid rgba(176,80,255,.18);
+      border-bottom:1px solid rgba(64, 200, 255,.18);
       font-size:13px;
       line-height:1.2;
     }
     .suggestionItem:last-child{ border-bottom:none; }
     .suggestionItem:hover, .suggestionItem.active{
-      background: rgba(176, 80, 255, .14);
+      background: rgba(64, 200, 255, .14);
     }
     .suggestionMeta{ color: var(--muted); font-size:12px; margin-left:6px; }
 
