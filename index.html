@@ -196,7 +196,7 @@
     While typing kills, sorting waits until you finish (blur/change).
   </div>
   <div class="muted" style="margin-top:5px;">
-    Saved on this device for <b>24 hours</b>.
+    Saved on this device for <b>24 hours</b> or until the <b>RESET</b> button is pressed.
   </div>
 </div>
 
@@ -451,8 +451,32 @@ function hookInputs(){
   document.getElementById("addGameBtn").addEventListener("click", () => addGame());
 
   document.getElementById("resetBtn").addEventListener("click", () => {
-    clearState();
-    location.reload();
+    // Reset players, games, and target score; keep static data (placements, multipliers, CSV)
+    ["p1","p2","p3","p4"].forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.value = "";
+    });
+
+    const target = document.getElementById("targetTotal");
+    if(target) target.value = 180;
+
+    games = [];
+    gameNodes.forEach(n => n.remove());
+    gameNodes.clear();
+    nextGameId = 1;
+
+    saveState();
+    updateTeam(true);
+  });
+
+    games = [];
+    gameNodes.forEach(n => n.remove());
+    gameNodes.clear();
+    nextGameId = 1;
+
+    // Save a "clean" state while keeping settings (placement/target) as-is
+    saveState();
+    updateTeam(true);
   });
 }
 
@@ -604,7 +628,7 @@ function updateTeam(forceSort){
     document.getElementById("divisor").textContent = "–";
     document.getElementById("killsNeeded45").textContent = "Select players to calculate";
     document.getElementById("killsNeededTarget").textContent = "—";
-    document.getElementById("replacementKills").textContent = "—";
+    document.getElementById("replacementBox").textContent = "—";
     recalc(forceSort);
     saveState();
     return;
