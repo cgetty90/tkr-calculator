@@ -19,10 +19,14 @@
     .grid-4 { grid-template-columns:1fr 1fr 1fr 1fr; }
     .grid-2 { grid-template-columns:1fr 1fr; }
     @media (max-width:900px){ .grid-4{grid-template-columns:1fr;} .grid-2{grid-template-columns:1fr;} }
-    .pill { display:inline-block; padding:4px 8px; border-radius:999px; border:1px solid #2a3b55; background:#0c1421; font-size:12px; margin-right:6px;}
+    .pill { display:inline-block; padding:4px 8px; border-radius:999px; border:1px solid #2a3b55; background:#0c1421; font-size:12px; margin-right:6px; margin-top:6px;}
     .muted { opacity:.85; font-size:12px; }
     .row { display:flex; gap:10px; align-items:end; }
     .row > * { flex: 1; }
+    table { width:100%; border-collapse:collapse; }
+    th, td { border-bottom:1px solid #1f2a3a; padding:8px; text-align:left; font-size:13px;}
+    th { font-size:12px; opacity:.8; }
+    .right { text-align:right; }
   </style>
 </head>
 <body>
@@ -30,36 +34,53 @@
 <h1>TKR – 45 Point Calculator</h1>
 
 <div class="card">
-  <h3 style="margin-top:0;">Team Selection (4 players)</h3>
+  <h3 style="margin-top:0;">Team Selection (4 slots)</h3>
   <div class="grid grid-4">
     <div><label>Player 1</label><select id="p1"></select></div>
     <div><label>Player 2</label><select id="p2"></select></div>
     <div><label>Player 3</label><select id="p3"></select></div>
     <div><label>Player 4</label><select id="p4"></select></div>
   </div>
+
+  <div id="rankBreakdown" style="margin-top:12px;"></div>
+
   <div style="margin-top:10px">
     <span class="pill">Team Rank: <b id="teamRank">–</b></span>
     <span class="pill">Real players: <b id="realPlayers">0</b></span>
     <span class="pill">Divisor (0.1×rank): <b id="divisor">–</b></span>
   </div>
+
   <div class="muted" style="margin-top:8px;">
-    Choose <b>NONE</b> for any slot (rank counts as 0). If you have exactly <b>3 real players</b> (one NONE), the app adds <b>+0.15</b> to each placement multiplier.
+    Choose <b>NONE</b> for any slot (rank counts as 0). If you have exactly <b>3 real players</b> (one NONE), the app adds <b>+0.15</b> to every placement multiplier.
   </div>
 </div>
 
 <div class="card">
-  <h3 style="margin-top:0;">Kills needed for a 45-point game</h3>
+  <h3 style="margin-top:0;">Kills needed</h3>
+
   <div class="grid grid-2" style="margin-bottom:10px;">
+    <!-- Left: assumed placement + milestones under it -->
     <div>
       <label>Assumed placement</label>
       <select id="assumedPlacement"></select>
-    </div>
-    <div>
-      <label>Milestones</label>
+
+      <div style="height:10px;"></div>
+      <label>Milestones (+1 each)</label>
       <input id="milestonesLabel" disabled/>
     </div>
+
+    <!-- Right: target score -->
+    <div>
+      <label>Target total score (all games)</label>
+      <input id="targetTotal" type="number" min="0" step="0.01" value="180"/>
+      <div class="muted" style="margin-top:6px;">
+        Max games: <b>4</b> (so target per-game = target/4). Max points per game = <b>45</b>.
+      </div>
+    </div>
   </div>
-  <div id="killsNeeded">Select players to calculate</div>
+
+  <div id="killsNeeded45" style="margin-bottom:10px;">Select players to calculate</div>
+  <div id="killsNeededTarget">—</div>
 </div>
 
 <div class="card">
@@ -76,7 +97,7 @@
 const MAX_GAMES = 4;
 const MAX_POINTS = 45;
 
-// Win multipliers (4 players)
+// Placement multipliers for 4 real players
 const PLACEMENTS = [
   { key: "1st",      label: "1st",      base: 2.25 },
   { key: "2nd-3rd",  label: "2nd–3rd",  base: 1.50 },
@@ -89,6 +110,7 @@ const PLACEMENTS = [
 const MILESTONES = [60,70,75,80,85,95,100];
 
 let rankings = [];
+let rankByName = new Map();
 let games = [];
 
 function milestonePoints(kills){
@@ -97,13 +119,11 @@ function milestonePoints(kills){
 
 function placementMulti(placementKey, realPlayers){
   const p = PLACEMENTS.find(x => x.key === placementKey) || PLACEMENTS[0];
-  // For 3 real players (one NONE selected), add +0.15 to each placement multiplier
-  const bonus = (realPlayers === 3) ? 0.15 : 0.0;
-  return p.base + bonus;
+  const trioBonus = (realPlayers === 3) ? 0.15 : 0.0;
+  return p.base + trioBonus;
 }
 
 function parseCSVLine(line){
-  // Simple CSV splitter that supports quoted fields.
   const out = [];
   let cur = "";
   let inQ = false;
@@ -124,9 +144,8 @@ function parseCSVLine(line){
 }
 
 async function loadCSV() {
-  // GitHub Pages: keep rankings.csv in the same repo root as index.html
-  const url = "rankings.csv?ts=" + Date.now(); // cache-buster to avoid stale CSV
-  const text = await fetch(url).then(r=>r.text());
+  const url = "rankings.csv?ts=" + Date.now();
+  const text = await fetch(url, { cache: "no-store" }).then(r=>r.text());
 
   const lines = text.replace(/\r/g,"").split("\n").filter(l => l.trim().length);
   if (!lines.length) throw new Error("rankings.csv is empty");
@@ -136,12 +155,21 @@ async function loadCSV() {
   const rankIdx = headers.indexOf("rank");
   if (nameIdx === -1 || rankIdx === -1) throw new Error("rankings.csv must have headers: name,rank");
 
-  rankings = lines.map(l=>{
+  rankings = [];
+  rankByName = new Map();
+
+  lines.forEach(l=>{
     const cols = parseCSVLine(l);
-    const name = cols[nameIdx] ?? "";
-    const rank = parseFloat(cols[rankIdx] ?? "0");
-    return { name, rank: isFinite(rank) ? rank : 0 };
-  }).filter(r => r.name);
+    const nameRaw = cols[nameIdx] ?? "";
+    const rankRaw = cols[rankIdx] ?? "0";
+    const name = String(nameRaw).trim();
+    const rank = parseFloat(String(rankRaw).trim());
+    if (!name) return;
+    const r = { name, rank: (isFinite(rank) ? rank : 0) };
+    rankings.push(r);
+    // If duplicates exist, last one wins.
+    rankByName.set(name, r.rank);
+  });
 
   rankings.sort((a,b)=>a.name.localeCompare(b.name, undefined, {sensitivity:"base"}));
 
@@ -186,36 +214,50 @@ function fillPlayers() {
   updateTeam();
 }
 
-function updateTeam() {
+function computeTeam(){
   const ids = ["p1","p2","p3","p4"];
-  let rankSum = 0;
+  let teamRank = 0;
   let realPlayers = 0;
+  const breakdown = [];
 
   ids.forEach(id=>{
-    const val = document.getElementById(id).value;
-    if (!val || val === "__NONE__") return;
-    const r = rankings.find(x => x.name === val);
-    if (r) {
-      rankSum += r.rank;
-      realPlayers += 1;
+    const name = document.getElementById(id).value;
+    if (!name || name === "__NONE__"){
+      breakdown.push({ name: "NONE", rank: 0 });
+      return;
     }
+    const rank = rankByName.get(name) ?? 0;
+    breakdown.push({ name, rank });
+    teamRank += rank;
+    realPlayers += 1;
   });
 
-  document.getElementById("realPlayers").textContent = String(realPlayers);
+  return { teamRank, realPlayers, breakdown };
+}
 
-  if (rankSum <= 0){
-    document.getElementById("teamRank").textContent="–";
-    document.getElementById("divisor").textContent="–";
-    document.getElementById("killsNeeded").textContent="Select players to calculate";
-    recalc();
-    return;
-  }
+function renderBreakdown(breakdown){
+  const rows = breakdown.map(b => `
+    <tr>
+      <td>${escapeHtml(b.name)}</td>
+      <td class="right">${Number(b.rank).toFixed(2)}</td>
+    </tr>
+  `).join("");
 
-  document.getElementById("teamRank").textContent=rankSum.toFixed(2);
-  document.getElementById("divisor").textContent=(rankSum*0.1).toFixed(2);
+  document.getElementById("rankBreakdown").innerHTML = `
+    <table>
+      <thead><tr><th>Player</th><th class="right">Rank</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
 
-  calcKillsNeeded(rankSum, realPlayers);
-  recalc();
+function escapeHtml(s){
+  return String(s)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
 }
 
 function gamePointsFromKills(kills, placementKey, teamRank, realPlayers){
@@ -225,26 +267,73 @@ function gamePointsFromKills(kills, placementKey, teamRank, realPlayers){
   return Math.min(MAX_POINTS, raw);
 }
 
-function calcKillsNeeded(teamRank, realPlayers){
-  const placementKey = document.getElementById("assumedPlacement").value || "1st";
-
+function minKillsForTarget(perGameTarget, placementKey, teamRank, realPlayers){
+  if (perGameTarget <= 0) return 0;
+  if (perGameTarget > MAX_POINTS) return null; // impossible because game is capped
   let kills = 0;
-  // Find the first integer kill count that reaches 45 (before capping, milestones included)
-  while (kills <= 2000){
+  while (kills <= 5000){
     const pts = gamePointsFromKills(kills, placementKey, teamRank, realPlayers);
-    if (pts >= MAX_POINTS){
-      const multi = placementMulti(placementKey, realPlayers);
-      const div = teamRank*0.1;
-      document.getElementById("killsNeeded").innerHTML =
-        `<b>${kills}</b> kills needed for a <b>45-point</b> game as <b>${PLACEMENTS.find(p=>p.key===placementKey)?.label || placementKey}</b>.
-         <div class="muted" style="margin-top:6px;">
-           (Using multiplier <b>${multi.toFixed(2)}</b>, divisor <b>${div.toFixed(2)}</b>, plus milestone points.)
-         </div>`;
-      return;
-    }
+    if (pts >= perGameTarget) return kills;
     kills++;
   }
-  document.getElementById("killsNeeded").textContent = "Unable to reach 45 points within 2000 kills (check ranks).";
+  return null;
+}
+
+function updateTeam() {
+  const { teamRank, realPlayers, breakdown } = computeTeam();
+  renderBreakdown(breakdown);
+
+  document.getElementById("realPlayers").textContent = String(realPlayers);
+
+  if (teamRank <= 0){
+    document.getElementById("teamRank").textContent="–";
+    document.getElementById("divisor").textContent="–";
+    document.getElementById("killsNeeded45").textContent="Select players to calculate";
+    document.getElementById("killsNeededTarget").textContent="—";
+    recalc();
+    return;
+  }
+
+  document.getElementById("teamRank").textContent = teamRank.toFixed(2);
+  document.getElementById("divisor").textContent = (teamRank*0.1).toFixed(2);
+
+  calcKillsNeededBlocks(teamRank, realPlayers);
+  recalc();
+}
+
+function calcKillsNeededBlocks(teamRank, realPlayers){
+  const placementKey = document.getElementById("assumedPlacement").value || "1st";
+  const placementLabel = PLACEMENTS.find(p=>p.key===placementKey)?.label || placementKey;
+
+  // 45-point max game
+  const k45 = minKillsForTarget(45, placementKey, teamRank, realPlayers);
+  const multi = placementMulti(placementKey, realPlayers);
+  const div = teamRank*0.1;
+
+  document.getElementById("killsNeeded45").innerHTML =
+    `<b>${k45 ?? "—"}</b> kills needed for a <b>45-point</b> game as <b>${placementLabel}</b>.
+     <div class="muted" style="margin-top:6px;">
+       (Multiplier <b>${multi.toFixed(2)}</b>, divisor <b>${div.toFixed(2)}</b>, milestones included, capped at 45)
+     </div>`;
+
+  // Target total score across all games
+  const targetTotal = parseFloat(document.getElementById("targetTotal").value || "0");
+  const perGameTarget = targetTotal / MAX_GAMES;
+
+  if (!isFinite(targetTotal) || targetTotal < 0){
+    document.getElementById("killsNeededTarget").innerHTML = `<span class="muted">Enter a valid target total.</span>`;
+    return;
+  }
+
+  if (perGameTarget > MAX_POINTS){
+    document.getElementById("killsNeededTarget").innerHTML =
+      `<span class="muted">Target total <b>${targetTotal.toFixed(2)}</b> implies <b>${perGameTarget.toFixed(2)}</b> points/game, but max is <b>45</b>.</span>`;
+    return;
+  }
+
+  const kTarget = minKillsForTarget(perGameTarget, placementKey, teamRank, realPlayers);
+  document.getElementById("killsNeededTarget").innerHTML =
+    `<b>${kTarget ?? "—"}</b> kills/game to average <b>${perGameTarget.toFixed(2)}</b> points/game (target total <b>${targetTotal.toFixed(2)}</b> over ${MAX_GAMES} games), as <b>${placementLabel}</b>.`;
 }
 
 function addGame(){
@@ -312,7 +401,6 @@ function renderGames(){
 function recalc(){
   const rankTxt = document.getElementById("teamRank").textContent;
   const realPlayers = parseInt(document.getElementById("realPlayers").textContent || "0", 10);
-
   let total = 0;
 
   if (rankTxt !== "–"){
@@ -328,7 +416,17 @@ function recalc(){
   document.getElementById("totalPoints").textContent = total.toFixed(2);
   document.getElementById("remainingPoints").textContent = String(MAX_POINTS * (MAX_GAMES - games.length));
   renderGames();
+
+  // Also update kills-needed blocks when games change? Not needed, but when ranks/placement/target changes, yes.
 }
+
+document.getElementById("targetTotal").addEventListener("input", () => {
+  const rankTxt = document.getElementById("teamRank").textContent;
+  const realPlayers = parseInt(document.getElementById("realPlayers").textContent || "0", 10);
+  if (rankTxt !== "–"){
+    calcKillsNeededBlocks(parseFloat(rankTxt), realPlayers);
+  }
+});
 
 loadCSV().catch(e=>alert(e.message));
 </script>
