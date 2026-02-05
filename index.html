@@ -3,123 +3,63 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>The Krew – TKR Scoring Guide</title>
+  <title>TKR 45-Point Calculator</title>
   <style>
-    :root{
-      --bg:#06030b;
-      --text:#ffffff;
-      --muted: rgba(255,255,255,.82);
-
-      --card: rgba(15,10,26,.82);
-      --card2: rgba(10,6,18,.92);
-
-      --border: rgba(176, 80, 255, .45);
-      --border2: rgba(176, 80, 255, .78);
-      --glow: rgba(176, 80, 255, .35);
-
-      --btn: rgba(176, 80, 255, .18);
-      --btnHover: rgba(176, 80, 255, .28);
-
-      --pillBg: rgba(10,6,18,.95);
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:#0b0f14; color:#e8eef6; margin:0; padding:20px;}
+    h1 { margin-top:0; }
+    .card { background:#111826; border:1px solid #1f2a3a; border-radius:12px; padding:14px; margin-bottom:14px;}
+    label { font-size:12px; opacity:.8; display:block; margin-bottom:4px;}
+    input, select, button {
+      width:100%; padding:8px; border-radius:8px;
+      border:1px solid #243248; background:#0c1421; color:#e8eef6;
     }
-
-    *{ box-sizing: border-box; }
-
-    body{
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background:var(--bg); color:var(--text);
-      margin:0; padding:20px;
-    }
-    h1{ margin:0 0 14px 0; letter-spacing:.3px; }
-    .card{
-      background:var(--card);
-      border:1px solid var(--border);
+    button { cursor:pointer; background:#13243d; }
+    button:hover { background:#173056; }
+    .grid { display:grid; gap:12px; }
+    .grid-4 { grid-template-columns:1fr 1fr 1fr 1fr; }
+    .grid-2 { grid-template-columns:1fr 1fr; }
+    @media (max-width:900px){ .grid-4{grid-template-columns:1fr;} .grid-2{grid-template-columns:1fr;} }
+    .pill { display:inline-block; padding:4px 8px; border-radius:999px; border:1px solid #2a3b55; background:#0c1421; font-size:12px; margin-right:6px; margin-top:6px;}
+    .muted { opacity:.85; font-size:12px; }
+    .row { display:flex; gap:10px; align-items:end; }
+    .row > * { flex: 1; }
+    .gameRow { border:1px solid #1f2a3a; border-radius:12px; padding:12px; margin-bottom:10px; background:#0c1421; }
+    .gameHead { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .gameHead strong { font-size:14px; }
+    .inlineBtn { width:auto; padding:8px 10px; }
+    .right { text-align:right; }
+  
+    .playerWrap{ position:relative; }
+    .suggestions{
+      position:absolute;
+      top:calc(100% + 6px);
+      left:0; right:0;
+      max-height:220px;
+      overflow:auto;
+      background:var(--card2);
+      border:1px solid var(--border2);
       border-radius:12px;
-      padding:10px;
-      margin-bottom:14px;
-      box-shadow: 0 0 0 1px var(--glow), 0 8px 30px rgba(0,0,0,.45);
-      backdrop-filter: blur(6px);
+      z-index:999;
+      display:none;
+      box-shadow: 0 0 0 1px rgba(176,80,255,.14), 0 16px 40px rgba(0,0,0,.55);
     }
-    label{ font-size:12px; color:var(--muted); display:block; margin-bottom:4px; }
-
-    input, select, button{
-      width:100%;
-      padding:7px;
-      border-radius:10px;
-      border:1px solid var(--border2);
-      background:var(--card2);
-      color:var(--text);
-      box-shadow: 0 0 0 1px rgba(176, 80, 255, .10), 0 0 18px rgba(176, 80, 255, .10);
-      outline:none;
-      font-size:14px;
-    }
-    input:focus, select:focus{
-      box-shadow: 0 0 0 2px rgba(176, 80, 255, .35), 0 0 26px rgba(176, 80, 255, .18);
-    }
-
-    /* Smaller player search boxes */
-    .playerInput{
-      padding:5px 8px;
-      font-size:13px;
-      border-radius:10px;
-    }
-
-    button{
+    .suggestionItem{
+      padding:8px 10px;
       cursor:pointer;
-      background:var(--btn);
-      border:1px solid rgba(176,80,255,.85);
-      color:var(--text);
-      box-shadow: 0 0 18px rgba(176,80,255,.16);
+      border-bottom:1px solid rgba(176,80,255,.18);
+      font-size:13px;
+      line-height:1.2;
     }
-    button:hover{
-      background:var(--btnHover);
-      box-shadow: 0 0 26px rgba(176,80,255,.22);
+    .suggestionItem:last-child{ border-bottom:none; }
+    .suggestionItem:hover, .suggestionItem.active{
+      background: rgba(176, 80, 255, .14);
     }
-
-    .grid{ display:grid; gap:16px; }
-    .grid-4{ grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
-    .grid-2{ grid-template-columns:1fr 1fr; }
-    @media (max-width:900px){
-      .grid-4{ grid-template-columns:1fr; }
-      .grid-2{ grid-template-columns:1fr; }
-    }
-
-    .pill{
-      display:inline-block;
-      padding:4px 8px;
-      border-radius:999px;
-      border:1px solid var(--border2);
-      background:var(--pillBg);
-      font-size:12px;
-      margin-right:5px;
-      margin-top:5px;
-    }
-    .muted{ color:var(--muted); font-size:12px; }
-
-    .row{ display:flex; gap:16px; align-items:end; flex-wrap:wrap; }
-    .row > *{ flex: 1; min-width: 240px; }
-
-    .gameRow{
-      border:1px solid var(--border);
-      border-radius:14px;
-      padding:10px;
-      margin-bottom:10px;
-      background:var(--card2);
-      box-shadow: 0 0 0 1px rgba(176,80,255,.18), 0 0 22px rgba(176,80,255,.10);
-    }
-    .gameHead{ display:flex; justify-content:space-between; align-items:center; gap:10px; }
-    .gameHead strong{ font-size:14px; }
-    .inlineBtn{ width:auto; padding:7px 10px; }
-
-    .spacer8{ height:8px; }
-    .spacer10{ height:10px; }
-      h3{ margin:0 0 10px 0; }
-    
-  </style>
+    .suggestionMeta{ color: var(--muted); font-size:12px; margin-left:6px; }
+    ""</style>
 </head>
 <body>
 
-<h1>The Krew – TKR Scoring Guide</h1>
+<h1>TKR – 45 Point Calculator</h1>
 
 <div class="card">
   <h3 style="margin-top:0;">Team Selection (4 slots)</h3>
@@ -127,10 +67,10 @@
   <datalist id="playersList"></datalist>
 
   <div class="grid grid-4">
-    <div><label>Player 1</label><input class="playerInput" id="p1" list="playersList" placeholder="Type a name (or NONE)"/></div>
-    <div><label>Player 2</label><input class="playerInput" id="p2" list="playersList" placeholder="Type a name (or NONE)"/></div>
-    <div><label>Player 3</label><input class="playerInput" id="p3" list="playersList" placeholder="Type a name (or NONE)"/></div>
-    <div><label>Player 4</label><input class="playerInput" id="p4" list="playersList" placeholder="Type a name (or NONE)"/></div>
+    <div><label>Player 1</label><input id="p1" list="playersList" placeholder="Type a name (or NONE)"/></div>
+    <div><label>Player 2</label><input id="p2" list="playersList" placeholder="Type a name (or NONE)"/></div>
+    <div><label>Player 3</label><input id="p3" list="playersList" placeholder="Type a name (or NONE)"/></div>
+    <div><label>Player 4</label><input id="p4" list="playersList" placeholder="Type a name (or NONE)"/></div>
   </div>
 
   <div style="margin-top:10px">
@@ -140,7 +80,7 @@
   </div>
 
   <div class="muted" style="margin-top:8px;">
-    Tip: start typing to filter the list. Leave a slot blank or type <b>NONE</b> to count rank as 0.
+    Tip: start typing to filter the name list. Leave a slot blank or type <b>NONE</b> to count rank as 0.
     If you have exactly <b>3 real players</b>, the app adds <b>+0.15</b> to every placement multiplier.
   </div>
 </div>
@@ -151,23 +91,17 @@
   <div class="grid grid-2" style="margin-bottom:10px;">
     <div>
       <label>Assumed placement</label>
-      <select id="assumedPlacement">
-  <option value="1st">1st</option>
-  <option value="2nd-3rd">2nd–3rd</option>
-  <option value="4th-5th">4th–5th</option>
-  <option value="6th-10th">6th–10th</option>
-  <option value="11th+">11th+</option>
-</select>
+      <select id="assumedPlacement"></select>
 
-      <div class="spacer10"></div>
+      <div style="height:10px;"></div>
       <label>Milestones (+1 each)</label>
-      <input id="milestonesLabel" disabled value="60,70,75,80,85,95,100"/>
+      <input id="milestonesLabel" disabled/>
     </div>
 
     <div>
       <label>Target total score (best 4 games)</label>
       <input id="targetTotal" type="number" min="0" step="0.01" value="180"/>
-      <div class="muted" style="margin-top:5px;">
+      <div class="muted" style="margin-top:6px;">
         Counted games: <b>best 4</b>. Max points/game = <b>45</b>.
       </div>
     </div>
@@ -175,34 +109,19 @@
 
   <div id="killsNeeded45" style="margin-bottom:10px;">Select players to calculate</div>
   <div id="killsNeededTarget">—</div>
-
-  </div>
+</div>
 
 <div class="card">
   <h3 style="margin-top:0;">Games (unlimited entries, counts best 4)</h3>
+  <button id="addGameBtn">Add Game</button>
   <div id="games" style="margin-top:10px;"></div>
-
-  <div class="spacer8"></div>
-  <div class="row">
-    <button id="addGameBtn">Add Game</button>
-    <button id="resetBtn" title="Clears saved data and refreshes">Reset</button>
-  </div>
-
   <div style="margin-top:10px">
     <span class="pill">Best 4 Total: <b id="best4Total">0.00</b></span>
     <span class="pill">Remaining Possible: <b id="remainingPossible">180.00</b></span>
     <span class="pill">Games Entered: <b id="gamesEntered">0</b></span>
   </div>
-
-  <div class="spacer8"></div>
-  <div id="replacementBox" class="muted"><b>Replacement helper:</b> Add games to see what you need to hit the target.</div>
-
   <div class="muted" style="margin-top:8px;">
-    Remaining Possible = (4 × 45) − (best-4 total). Games display sorted by points (highest first).
-    While typing kills, sorting waits until you finish (blur/change).
-  </div>
-  <div class="muted" style="margin-top:5px;">
-    Saved on this device for <b>24 hours</b>.
+    Games are displayed sorted by points (highest first). While typing kills, sorting waits until you finish (blur/change) so it won’t kick you out.
   </div>
 </div>
 
@@ -210,11 +129,6 @@
 const COUNTED_GAMES = 4;
 const MAX_POINTS = 45;
 
-// Local save (per device)
-const STORAGE_KEY = "tkr_calc_state_neon_v1";
-const TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
-
-// Placement multipliers (4-player baseline). Trio-quad (3 real players) adds +0.15
 const PLACEMENTS = [
   { key: "1st",      label: "1st",      base: 2.25 },
   { key: "2nd-3rd",  label: "2nd–3rd",  base: 1.50 },
@@ -223,112 +137,20 @@ const PLACEMENTS = [
   { key: "11th+",    label: "11th+",    base: 0.75 },
 ];
 
-// Milestones (+1 each)
 const MILESTONES = [60,70,75,80,85,95,100];
 
 let rankings = [];
 let rankByNameLower = new Map(); // lower(name) -> rank
 
-// Games: {id, killsStr, killsInt, placement, points}
+// Game objects: {id, killsStr, killsInt, placement, points}
+// We keep DOM nodes stable to avoid focus loss while typing.
 let games = [];
 let gameNodes = new Map(); // id -> element
 let nextGameId = 1;
 
-function nowMs(){ return Date.now(); }
-
-function saveState(){
-  try{
-    const state = {
-      savedAt: nowMs(),
-      team: {
-        p1: document.getElementById("p1").value || "",
-        p2: document.getElementById("p2").value || "",
-        p3: document.getElementById("p3").value || "",
-        p4: document.getElementById("p4").value || ""
-      },
-      settings: {
-        assumedPlacement: document.getElementById("assumedPlacement").value || "1st",
-        targetTotal: document.getElementById("targetTotal").value || ""
-      },
-      games: games.map(g => ({
-        id: g.id,
-        killsStr: g.killsStr ?? "",
-        killsInt: (typeof g.killsInt === "number" ? g.killsInt : null),
-        placement: g.placement || "1st"
-      })),
-      nextGameId
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }catch(e){}
-}
-
-function loadState(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw) return false;
-    const state = JSON.parse(raw);
-    const age = nowMs() - (state.savedAt || 0);
-    if(!isFinite(age) || age > TTL_MS){
-      localStorage.removeItem(STORAGE_KEY);
-      return false;
-    }
-
-    if(state.settings){
-      if(state.settings.assumedPlacement) document.getElementById("assumedPlacement").value = state.settings.assumedPlacement;
-      if(state.settings.targetTotal !== undefined) document.getElementById("targetTotal").value = state.settings.targetTotal;
-    }
-
-    if(state.team){
-      ["p1","p2","p3","p4"].forEach(k=>{
-        if(state.team[k] !== undefined) document.getElementById(k).value = state.team[k];
-      });
-    }
-
-    // games
-    games = [];
-    gameNodes.forEach(n => n.remove());
-    gameNodes.clear();
-
-    nextGameId = (typeof state.nextGameId === "number" && state.nextGameId > 0) ? state.nextGameId : 1;
-
-    if(Array.isArray(state.games)){
-      state.games.forEach(sg=>{
-        const id = (typeof sg.id === "number" && sg.id > 0) ? sg.id : nextGameId++;
-        const g = {
-          id,
-          killsStr: (sg.killsStr ?? ""),
-          killsInt: (typeof sg.killsInt === "number" ? sg.killsInt : null),
-          placement: sg.placement || "1st",
-          points: 0
-        };
-        games.push(g);
-        const node = createGameNode(g);
-        gameNodes.set(id, node);
-        document.getElementById("games").appendChild(node);
-
-        const killsEl = node.querySelector(`#kills-${id}`);
-        if(killsEl) killsEl.value = g.killsStr || "";
-        const placeEl = node.querySelector(`#place-${id}`);
-        if(placeEl) placeEl.value = g.placement;
-      });
-
-      const maxId = games.reduce((m,g)=>Math.max(m,g.id), 0);
-      if(nextGameId <= maxId) nextGameId = maxId + 1;
-    }
-
-    return true;
-  }catch(e){
-    return false;
-  }
-}
-
-function clearState(){
-  try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
-}
-
 function milestonePoints(kills){
   const k = (typeof kills === "number" && isFinite(kills)) ? kills : 0;
-  return MILESTONES.filter(m => k >= m).length;
+  return MILESTONES.filter(m=>k>=m).length;
 }
 
 function placementMulti(placementKey, realPlayers){
@@ -336,52 +158,37 @@ function placementMulti(placementKey, realPlayers){
   return p.base + ((realPlayers === 3) ? 0.15 : 0.0);
 }
 
-function gamePointsFromKills(kills, placementKey, teamRank, realPlayers){
-  const k = (typeof kills === "number" && isFinite(kills)) ? kills : 0;
-  const div = teamRank * 0.1;
-  const multi = placementMulti(placementKey, realPlayers);
-  const raw = (k * multi / div) + milestonePoints(k);
-  return Math.min(MAX_POINTS, raw);
-}
-
-function minKillsForTarget(targetPoints, placementKey, teamRank, realPlayers){
-  if(targetPoints <= 0) return 0;
-  if(targetPoints > MAX_POINTS) return null;
-  for(let kills=0; kills<=5000; kills++){
-    const pts = gamePointsFromKills(kills, placementKey, teamRank, realPlayers);
-    if(pts >= targetPoints) return kills;
-  }
-  return null;
-}
-
 function parseCSVLine(line){
   const out = [];
   let cur = "";
   let inQ = false;
-  for(let i=0;i<line.length;i++){
+  for (let i=0;i<line.length;i++){
     const ch = line[i];
-    if(ch === '"'){
-      if(inQ && line[i+1] === '"'){ cur += '"'; i++; }
+    if (ch === '"') {
+      if (inQ && line[i+1] === '"') { cur += '"'; i++; }
       else inQ = !inQ;
-    }else if(ch === ',' && !inQ){
-      out.push(cur); cur = "";
-    }else cur += ch;
+    } else if (ch === ',' && !inQ) {
+      out.push(cur);
+      cur = "";
+    } else {
+      cur += ch;
+    }
   }
   out.push(cur);
   return out.map(s => s.trim());
 }
 
-async function loadCSV(){
+async function loadCSV() {
   const url = "rankings.csv?ts=" + Date.now();
   const text = await fetch(url, { cache: "no-store" }).then(r=>r.text());
 
   const lines = text.replace(/\r/g,"").split("\n").filter(l => l.trim().length);
-  if(!lines.length) throw new Error("rankings.csv is empty");
+  if (!lines.length) throw new Error("rankings.csv is empty");
 
   const headers = parseCSVLine(lines.shift()).map(h => h.toLowerCase());
   const nameIdx = headers.indexOf("name");
   const rankIdx = headers.indexOf("rank");
-  if(nameIdx === -1 || rankIdx === -1) throw new Error("rankings.csv must have headers: name,rank");
+  if (nameIdx === -1 || rankIdx === -1) throw new Error("rankings.csv must have headers: name,rank");
 
   rankings = [];
   rankByNameLower = new Map();
@@ -390,21 +197,18 @@ async function loadCSV(){
     const cols = parseCSVLine(l);
     const name = String(cols[nameIdx] ?? "").trim();
     const rank = parseFloat(String(cols[rankIdx] ?? "0").trim());
-    if(!name) return;
+    if (!name) return;
     const r = isFinite(rank) ? rank : 0;
     rankings.push({ name, rank: r });
     rankByNameLower.set(name.toLowerCase(), r);
   });
 
-  rankings.sort((a,b)=>a.name.localeCompare(b.name, undefined, { sensitivity:"base" }));
+  rankings.sort((a,b)=>a.name.localeCompare(b.name, undefined, {sensitivity:"base"}));
   buildDatalist();
   fillPlacements();
   hookInputs();
   document.getElementById("milestonesLabel").value = MILESTONES.join(", ");
-
-  loadState();
   updateTeam(true);
-  recalc(true);
 }
 
 function buildDatalist(){
@@ -424,6 +228,133 @@ function buildDatalist(){
   });
 }
 
+// ===== Autocomplete dropdown (works on mobile too) =====
+function getAllPlayerNames(){
+  // rankings are loaded from CSV; build list each time so it's always current
+  const names = ["NONE", ...rankings.map(r => r.name)];
+  return names;
+}
+
+function getRankForName(name){
+  if(!name) return null;
+  if(name.toLowerCase() === "none") return 0;
+  const r = rankByNameLower.get(name.toLowerCase());
+  return (typeof r === "number") ? r : null;
+}
+
+function showSuggestions(inputId){
+  const input = document.getElementById(inputId);
+  const box = document.getElementById("sug-" + inputId);
+  if(!input || !box) return;
+
+  const q = (input.value || "").trim().toLowerCase();
+  const names = getAllPlayerNames();
+
+  // Filter: contains match (better for typos); prefer startsWith
+  let matches = names.filter(n => n.toLowerCase().includes(q));
+  matches.sort((a,b)=>{
+    const al = a.toLowerCase(), bl = b.toLowerCase();
+    const as = q && al.startsWith(q), bs = q && bl.startsWith(q);
+    if(as !== bs) return as ? -1 : 1;
+    return a.localeCompare(b, undefined, {sensitivity:"base"});
+  });
+
+  // If empty query, show first N alphabetically (NONE first)
+  if(!q){
+    const rest = rankings.map(r=>r.name).slice().sort((a,b)=>a.localeCompare(b, undefined, {sensitivity:"base"}));
+    matches = ["NONE", ...rest];
+  }
+
+  matches = matches.slice(0, 12);
+
+  if(matches.length === 0){
+    box.style.display = "none";
+    box.innerHTML = "";
+    return;
+  }
+
+  box.innerHTML = matches.map((name, idx)=>{
+    const rank = getRankForName(name);
+    const meta = (rank === null) ? "" : `<span class="suggestionMeta">(${rank})</span>`;
+    return `<div class="suggestionItem" data-name="${escapeHtml(name)}" data-idx="${idx}">${escapeHtml(name)} ${meta}</div>`;
+  }).join("");
+
+  box.querySelectorAll(".suggestionItem").forEach(item=>{
+    item.addEventListener("mousedown", (e) => { e.preventDefault(); }); // prevent blur before click
+    item.addEventListener("click", () => {
+      const name = item.getAttribute("data-name");
+      input.value = unescapeHtml(name);
+      hideSuggestions(inputId);
+      updateTeam(true);
+      saveState();
+    });
+  });
+
+  // reset active index
+  box.dataset.active = "-1";
+  box.style.display = "block";
+}
+
+function hideSuggestions(inputId){
+  const box = document.getElementById("sug-" + inputId);
+  if(!box) return;
+  box.style.display = "none";
+  box.innerHTML = "";
+  box.dataset.active = "-1";
+}
+
+function handleSuggestKeys(e, inputId){
+  const box = document.getElementById("sug-" + inputId);
+  const input = document.getElementById(inputId);
+  if(!box || !input) return;
+
+  const isOpen = box.style.display === "block";
+  if(!isOpen && (e.key === "ArrowDown" || e.key === "ArrowUp")){
+    showSuggestions(inputId);
+    return;
+  }
+  if(!isOpen) return;
+
+  const items = Array.from(box.querySelectorAll(".suggestionItem"));
+  if(items.length === 0) return;
+
+  let active = parseInt(box.dataset.active || "-1", 10);
+  if(e.key === "ArrowDown"){
+    e.preventDefault();
+    active = Math.min(items.length - 1, active + 1);
+  }else if(e.key === "ArrowUp"){
+    e.preventDefault();
+    active = Math.max(0, active - 1);
+  }else if(e.key === "Enter"){
+    if(active >= 0 && active < items.length){
+      e.preventDefault();
+      items[active].click();
+    }
+    return;
+  }else if(e.key === "Escape"){
+    hideSuggestions(inputId);
+    return;
+  }else{
+    return;
+  }
+
+  items.forEach((it, i)=> it.classList.toggle("active", i === active));
+  box.dataset.active = String(active);
+  const it = items[active];
+  if(it) it.scrollIntoView({block:"nearest"});
+}
+
+// tiny helpers so we can store names safely in data attributes
+function escapeHtml(str){
+  return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+}
+function unescapeHtml(str){
+  const t = document.createElement("textarea");
+  t.innerHTML = str;
+  return t.value;
+}
+
+
 function fillPlacements(){
   const s = document.getElementById("assumedPlacement");
   s.innerHTML = "";
@@ -433,18 +364,29 @@ function fillPlacements(){
     o.textContent = p.label;
     s.appendChild(o);
   });
-  if(!s.value) s.value = "1st";
+  s.value = "1st";
   s.addEventListener("change", () => updateTeam(true));
 }
 
 function hookInputs(){
+  // Player inputs
   ["p1","p2","p3","p4"].forEach(id=>{
     const el = document.getElementById(id);
-    el.addEventListener("input", () => updateTeam(false));
+    el.addEventListener("input", () => {
+      showSuggestions(id);
+      updateTeam(false);
+    });
+    el.addEventListener("focus", () => showSuggestions(id));
+    el.addEventListener("keydown", (e) => handleSuggestKeys(e, id));
     el.addEventListener("change", () => updateTeam(true));
-    el.addEventListener("blur", () => updateTeam(true));
+    el.addEventListener("blur", () => {
+      // delay so click on suggestion works
+      setTimeout(() => hideSuggestions(id), 120);
+      updateTeam(true);
+    });
   });
 
+  // Target changes
   document.getElementById("targetTotal").addEventListener("input", () => {
     const rankTxt = document.getElementById("teamRank").textContent;
     if(rankTxt !== "–"){
@@ -454,6 +396,7 @@ function hookInputs(){
     saveState();
   });
 
+  // Buttons
   document.getElementById("addGameBtn").addEventListener("click", () => addGame());
 
   document.getElementById("resetBtn").addEventListener("click", () => {
@@ -461,6 +404,7 @@ function hookInputs(){
     ["p1","p2","p3","p4"].forEach(id => {
       const el = document.getElementById(id);
       if(el) el.value = "";
+      hideSuggestions(id);
     });
 
     const target = document.getElementById("targetTotal");
@@ -474,23 +418,13 @@ function hookInputs(){
     saveState();
     updateTeam(true);
   });
-
-    games = [];
-    gameNodes.forEach(n => n.remove());
-    gameNodes.clear();
-    nextGameId = 1;
-
-    // Save a "clean" state while keeping settings (placement/target) as-is
-    saveState();
-    updateTeam(true);
-  });
 }
 
 function normalizeName(raw){
   let v = String(raw ?? "").trim();
-  if(!v) return "";
+  if (!v) return "";
   const idx = v.lastIndexOf(" (");
-  if(idx > 0 && v.endsWith(")")) v = v.slice(0, idx).trim();
+  if (idx > 0 && v.endsWith(")")) v = v.slice(0, idx).trim();
   return v;
 }
 
@@ -501,11 +435,11 @@ function computeTeam(){
 
   ids.forEach(id=>{
     const typed = normalizeName(document.getElementById(id).value);
-    if(!typed) return;
-    if(typed.toLowerCase() === "none") return;
+    if (!typed) return;
+    if (typed.toLowerCase() === "none") return;
 
     const r = rankByNameLower.get(typed.toLowerCase());
-    if(typeof r === "number"){
+    if (typeof r === "number"){
       teamRank += r;
       realPlayers += 1;
     }
@@ -514,129 +448,35 @@ function computeTeam(){
   return { teamRank, realPlayers };
 }
 
-function calcKillsNeededBlocks(teamRank, realPlayers){
-  const placementKey = document.getElementById("assumedPlacement").value || "1st";
-  const placementLabel = PLACEMENTS.find(p=>p.key===placementKey)?.label || placementKey;
-  const multi = placementMulti(placementKey, realPlayers);
+function gamePointsFromKills(kills, placementKey, teamRank, realPlayers){
+  const k = (typeof kills === "number" && isFinite(kills)) ? kills : 0;
   const div = teamRank * 0.1;
-
-  const k45 = minKillsForTarget(45, placementKey, teamRank, realPlayers);
-  document.getElementById("killsNeeded45").innerHTML =
-    `<b>${k45 ?? "—"}</b> kills needed for a <b>45-point</b> game as <b>${placementLabel}</b>.
-     <div class="muted" style="margin-top:5px;">
-       (Multiplier <b>${multi.toFixed(2)}</b>, divisor <b>${div.toFixed(2)}</b>, milestones included, capped at 45)
-     </div>`;
-
-  const targetTotal = parseFloat(document.getElementById("targetTotal").value || "0");
-  const perGameTarget = targetTotal / COUNTED_GAMES;
-
-  if(!isFinite(targetTotal) || targetTotal < 0){
-    document.getElementById("killsNeededTarget").innerHTML = `<span class="muted">Enter a valid target total.</span>`;
-    return;
-  }
-  if(perGameTarget > MAX_POINTS){
-    document.getElementById("killsNeededTarget").innerHTML =
-      `<span class="muted">Target total <b>${targetTotal.toFixed(2)}</b> implies <b>${perGameTarget.toFixed(2)}</b> points/game, but max is <b>45</b>.</span>`;
-    return;
-  }
-
-  const kTarget = minKillsForTarget(perGameTarget, placementKey, teamRank, realPlayers);
-  document.getElementById("killsNeededTarget").innerHTML =
-    `<b>${kTarget ?? "—"}</b> kills/game to average <b>${perGameTarget.toFixed(2)}</b> points/game (target total <b>${targetTotal.toFixed(2)}</b>), as <b>${placementLabel}</b>.`;
+  const multi = placementMulti(placementKey, realPlayers);
+  const raw = (k * multi / div) + milestonePoints(k);
+  return Math.min(MAX_POINTS, raw);
 }
 
-function updateReplacementHelper(){
-  const box = document.getElementById("replacementBox");
-  if(!box) return;
-
-  const rankTxt = document.getElementById("teamRank").textContent;
-  const realPlayers = parseInt(document.getElementById("realPlayers").textContent || "0", 10);
-  const targetTotal = parseFloat(document.getElementById("targetTotal").value || "0");
-
-  if(rankTxt === "–"){
-    box.innerHTML = `<b>Replacement helper:</b> Select players to calculate.`;
-    return;
+function minKillsForTarget(perGameTarget, placementKey, teamRank, realPlayers){
+  if (perGameTarget <= 0) return 0;
+  if (perGameTarget > MAX_POINTS) return null;
+  let kills = 0;
+  while (kills <= 5000){
+    if (gamePointsFromKills(kills, placementKey, teamRank, realPlayers) >= perGameTarget) return kills;
+    kills++;
   }
-  if(!isFinite(targetTotal) || targetTotal < 0){
-    box.innerHTML = `<b>Replacement helper:</b> Enter a valid target total.`;
-    return;
-  }
-
-  const teamRank = parseFloat(rankTxt);
-  const placementKey = document.getElementById("assumedPlacement").value || "1st";
-  const placementLabel = PLACEMENTS.find(p=>p.key===placementKey)?.label || placementKey;
-
-  const sorted = [...games].sort((a,b)=> (b.points - a.points) || (a.id - b.id));
-  const best4 = sorted.slice(0, 4);
-  const best4Total = best4.reduce((s,g)=>s+g.points, 0);
-
-  // If already hitting target with best 4, just show the 4th best game for reference
-  if(best4Total >= targetTotal){
-    const fourth = best4[3];
-    const fourthTxt = fourth ? `${fourth.points.toFixed(2)} pts (${(fourth.killsInt ?? 0)} kills, ${PLACEMENTS.find(p=>p.key===fourth.placement)?.label || fourth.placement})` : "—";
-    box.innerHTML = `<b>Replacement helper:</b> Target <b>${targetTotal.toFixed(2)}</b> is met with your current best 4 total <b>${best4Total.toFixed(2)}</b>. <span class="muted">4th best game:</span> <b>${fourthTxt}</b>.`;
-    return;
-  }
-
-  // Need more points: try "best 3 + 1 replacement" first
-  const best3 = sorted.slice(0, 3);
-  const best3Total = best3.reduce((s,g)=>s+g.points, 0);
-  let need = targetTotal - best3Total;
-
-  const fourth = best4[3];
-  const fourthPts = fourth ? fourth.points : 0;
-  const fourthTxt = fourth ? `${fourthPts.toFixed(2)} pts (${(fourth.killsInt ?? 0)} kills, ${PLACEMENTS.find(p=>p.key===fourth.placement)?.label || fourth.placement})` : "—";
-
-  if(need <= MAX_POINTS){
-    const kills = minKillsForTarget(need, placementKey, teamRank, realPlayers);
-    // If we already have a 4th game entered, show how much improvement is needed to replace it
-    const improve = Math.max(0, need - fourthPts);
-    const improveTxt = (fourth ? ` You need <b>+${improve.toFixed(2)}</b> pts over your current 4th best.` : "");
-    box.innerHTML =
-      `<b>Replacement helper (1 game):</b> Your best 3 total <b>${best3Total.toFixed(2)}</b>. 4th best game is <b>${fourthTxt}</b>.<br>` +
-      `To reach target <b>${targetTotal.toFixed(2)}</b>, the 4th counted game must be about <b>${need.toFixed(2)}</b> pts. That’s ~<b>${kills ?? "—"}</b> kills if you place <b>${placementLabel}</b>.` +
-      improveTxt;
-    return;
-  }
-
-  // If 1 game can't do it, try "best 2 + 2 replacements"
-  const best2 = sorted.slice(0, 2);
-  const best2Total = best2.reduce((s,g)=>s+g.points, 0);
-  need = targetTotal - best2Total;
-
-  if(need > 2 * MAX_POINTS){
-    box.innerHTML =
-      `<b>Replacement helper (2 games):</b> Even using your best 2 total <b>${best2Total.toFixed(2)}</b>, you’d need <b>${need.toFixed(2)}</b> points across the next 2 counted games. Max is <b>${(2*MAX_POINTS).toFixed(0)}</b> (2×45), so this target isn’t possible with 2 replacement games.`;
-    return;
-  }
-
-  // Provide two useful splits: even split, and "one max 45 then rest"
-  const even = need / 2;
-  const evenKills = minKillsForTarget(even, placementKey, teamRank, realPlayers);
-
-  const firstA = Math.min(MAX_POINTS, need); // cap for first game
-  const secondA = Math.max(0, need - firstA);
-  const kA1 = minKillsForTarget(firstA, placementKey, teamRank, realPlayers);
-  const kA2 = minKillsForTarget(secondA, placementKey, teamRank, realPlayers);
-
-  box.innerHTML =
-    `<b>Replacement helper (2 games):</b> Best 2 total <b>${best2Total.toFixed(2)}</b>. You need <b>${need.toFixed(2)}</b> points across the next 2 counted games.<br>` +
-    `Option A (even split): aim for <b>${even.toFixed(2)}</b> pts each → ~<b>${evenKills ?? "—"}</b> kills/game if you place <b>${placementLabel}</b>.<br>` +
-    `Option B (one big + one cleanup): <b>${firstA.toFixed(2)}</b> pts then <b>${secondA.toFixed(2)}</b> pts → ~<b>${kA1 ?? "—"}</b> kills then ~<b>${kA2 ?? "—"}</b> kills.`;
+  return null;
 }
 
 function updateTeam(forceSort){
   const { teamRank, realPlayers } = computeTeam();
   document.getElementById("realPlayers").textContent = String(realPlayers);
 
-  if(teamRank <= 0){
-    document.getElementById("teamRank").textContent = "–";
-    document.getElementById("divisor").textContent = "–";
-    document.getElementById("killsNeeded45").textContent = "Select players to calculate";
-    document.getElementById("killsNeededTarget").textContent = "—";
-    document.getElementById("replacementBox").textContent = "—";
+  if (teamRank <= 0){
+    document.getElementById("teamRank").textContent="–";
+    document.getElementById("divisor").textContent="–";
+    document.getElementById("killsNeeded45").textContent="Select players to calculate";
+    document.getElementById("killsNeededTarget").textContent="—";
     recalc(forceSort);
-    saveState();
     return;
   }
 
@@ -645,8 +485,37 @@ function updateTeam(forceSort){
 
   calcKillsNeededBlocks(teamRank, realPlayers);
   recalc(forceSort);
-  updateReplacementHelper();
-  saveState();
+}
+
+function calcKillsNeededBlocks(teamRank, realPlayers){
+  const placementKey = document.getElementById("assumedPlacement").value || "1st";
+  const placementLabel = PLACEMENTS.find(p=>p.key===placementKey)?.label || placementKey;
+  const multi = placementMulti(placementKey, realPlayers);
+  const div = teamRank*0.1;
+
+  const k45 = minKillsForTarget(45, placementKey, teamRank, realPlayers);
+  document.getElementById("killsNeeded45").innerHTML =
+    `<b>${k45 ?? "—"}</b> kills needed for a <b>45-point</b> game as <b>${placementLabel}</b>.
+     <div class="muted" style="margin-top:6px;">
+       (Multiplier <b>${multi.toFixed(2)}</b>, divisor <b>${div.toFixed(2)}</b>, milestones included, capped at 45)
+     </div>`;
+
+  const targetTotal = parseFloat(document.getElementById("targetTotal").value || "0");
+  const perGameTarget = targetTotal / COUNTED_GAMES;
+
+  if (!isFinite(targetTotal) || targetTotal < 0){
+    document.getElementById("killsNeededTarget").innerHTML = `<span class="muted">Enter a valid target total.</span>`;
+    return;
+  }
+  if (perGameTarget > MAX_POINTS){
+    document.getElementById("killsNeededTarget").innerHTML =
+      `<span class="muted">Target total <b>${targetTotal.toFixed(2)}</b> implies <b>${perGameTarget.toFixed(2)}</b> points/game, but max is <b>45</b>.</span>`;
+    return;
+  }
+
+  const kTarget = minKillsForTarget(perGameTarget, placementKey, teamRank, realPlayers);
+  document.getElementById("killsNeededTarget").innerHTML =
+    `<b>${kTarget ?? "—"}</b> kills/game to average <b>${perGameTarget.toFixed(2)}</b> points/game (target total <b>${targetTotal.toFixed(2)}</b>), as <b>${placementLabel}</b>.`;
 }
 
 function addGame(){
@@ -659,8 +528,6 @@ function addGame(){
   document.getElementById("games").appendChild(node);
 
   recalc(true);
-  updateReplacementHelper();
-  saveState();
 }
 
 function createGameNode(g){
@@ -700,46 +567,39 @@ function createGameNode(g){
   });
   placeSel.value = g.placement;
 
+  // Remove
   wrapper.querySelector(`#remove-${g.id}`).addEventListener("click", () => {
     games = games.filter(x => x.id !== g.id);
     const node = gameNodes.get(g.id);
-    if(node) node.remove();
+    if (node) node.remove();
     gameNodes.delete(g.id);
     recalc(true);
-    updateReplacementHelper();
-    saveState();
   });
 
   const killsInput = wrapper.querySelector(`#kills-${g.id}`);
 
+  // On input: update without sorting (prevents focus loss / "backs out")
   killsInput.addEventListener("input", (e) => {
     const val = String(e.target.value ?? "");
     g.killsStr = val;
     const t = val.trim();
-    if(t === ""){
+    if (t === ""){
       g.killsInt = null;
     } else {
       const n = parseInt(t, 10);
       g.killsInt = (isFinite(n) ? Math.max(0, n) : null);
     }
     recalc(false);
-    updateReplacementHelper();
-    saveState();
   });
 
-  killsInput.addEventListener("change", () => { recalc(true); updateReplacementHelper(); saveState(); });
-  killsInput.addEventListener("blur", () => { recalc(true); updateReplacementHelper(); saveState(); });
+  // On blur/change: allow sorting
+  killsInput.addEventListener("change", () => recalc(true));
+  killsInput.addEventListener("blur", () => recalc(true));
 
   placeSel.addEventListener("change", (e) => {
     g.placement = e.target.value;
     recalc(true);
-    updateReplacementHelper();
-    saveState();
   });
-
-  // Fill placement selector
-  const placeEl = wrapper.querySelector(`#place-${g.id}`);
-  if(placeEl) placeEl.value = g.placement;
 
   return wrapper;
 }
@@ -749,22 +609,27 @@ function recalc(forceSort){
   const realPlayers = parseInt(document.getElementById("realPlayers").textContent || "0", 10);
 
   let teamRank = null;
-  if(rankTxt !== "–") teamRank = parseFloat(rankTxt);
+  if (rankTxt !== "–") teamRank = parseFloat(rankTxt);
 
+  // compute points for each game, update UI for each game row (no re-render)
   games.forEach(g=>{
     const kills = (typeof g.killsInt === "number") ? g.killsInt : 0;
-    g.points = (teamRank && teamRank > 0) ? gamePointsFromKills(kills, g.placement, teamRank, realPlayers) : 0;
-
+    if (teamRank && teamRank > 0){
+      g.points = gamePointsFromKills(kills, g.placement, teamRank, realPlayers);
+    } else {
+      g.points = 0;
+    }
     const node = gameNodes.get(g.id);
-    if(node){
+    if (node){
       node.querySelector(`#mile-${g.id}`).textContent = String(milestonePoints(kills));
       node.querySelector(`#pts-${g.id}`).textContent = g.points.toFixed(2);
     }
   });
 
+  // best 4 total
   const sortedByPts = [...games].sort((a,b) => (b.points - a.points) || (a.id - b.id));
   const best4 = sortedByPts.slice(0, COUNTED_GAMES);
-  const best4Total = best4.reduce((s,g)=>s+g.points, 0);
+  const best4Total = best4.reduce((s,g)=>s+g.points,0);
 
   const maxTotal = COUNTED_GAMES * MAX_POINTS;
   const remaining = Math.max(0, maxTotal - best4Total);
@@ -773,24 +638,32 @@ function recalc(forceSort){
   document.getElementById("remainingPossible").textContent = remaining.toFixed(2);
   document.getElementById("gamesEntered").textContent = String(games.length);
 
-  if(forceSort){
+  // Sort display order by points (if requested)
+  if (forceSort){
     const active = document.activeElement;
-    const activeInfo = active ? { id: active.id, start: active.selectionStart ?? null, end: active.selectionEnd ?? null } : null;
+    const activeInfo = active ? {
+      id: active.id,
+      start: (active.selectionStart ?? null),
+      end: (active.selectionEnd ?? null),
+    } : null;
 
     const container = document.getElementById("games");
+    // Re-order existing nodes (no recreation)
     sortedByPts.forEach((g, idx) => {
       const node = gameNodes.get(g.id);
-      if(node) container.appendChild(node);
+      if (node) container.appendChild(node);
+      // Title shows rank in list
       const title = node ? node.querySelector(`#title-${g.id}`) : null;
-      if(title) title.textContent = `Game (Rank ${idx+1})`;
+      if (title) title.textContent = `Game (Rank ${idx+1})`;
     });
 
-    if(activeInfo && activeInfo.id){
+    // Restore focus/caret if possible
+    if (activeInfo && activeInfo.id){
       const el = document.getElementById(activeInfo.id);
-      if(el){
-        el.focus({ preventScroll:true });
-        if(typeof activeInfo.start === "number" && typeof activeInfo.end === "number"){
-          try{ el.setSelectionRange(activeInfo.start, activeInfo.end); }catch(e){}
+      if (el){
+        el.focus({ preventScroll: true });
+        if (typeof activeInfo.start === "number" && typeof activeInfo.end === "number"){
+          try { el.setSelectionRange(activeInfo.start, activeInfo.end); } catch {}
         }
       }
     }
