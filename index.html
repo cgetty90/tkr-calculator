@@ -23,6 +23,8 @@
       --pillBg: rgba(10,6,18,.95);
     }
 
+    *{ box-sizing: border-box; }
+
     body{
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       background:var(--bg); color:var(--text);
@@ -74,7 +76,7 @@
       box-shadow: 0 0 26px rgba(176,80,255,.22);
     }
 
-    .grid{ display:grid; gap:12px; }
+    .grid{ display:grid; gap:16px; }
     .grid-4{ grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
     .grid-2{ grid-template-columns:1fr 1fr; }
     @media (max-width:900px){
@@ -94,8 +96,8 @@
     }
     .muted{ color:var(--muted); font-size:12px; }
 
-    .row{ display:flex; gap:8px; align-items:end; flex-wrap:wrap; }
-    .row > *{ flex: 1; min-width: 210px; }
+    .row{ display:flex; gap:16px; align-items:end; flex-wrap:wrap; }
+    .row > *{ flex: 1; min-width: 240px; }
 
     .gameRow{
       border:1px solid var(--border);
@@ -107,7 +109,7 @@
     }
     .gameHead{ display:flex; justify-content:space-between; align-items:center; gap:10px; }
     .gameHead strong{ font-size:14px; }
-    .inlineBtn{ width:auto; padding:8px 10px; }
+    .inlineBtn{ width:auto; padding:7px 10px; }
 
     .spacer8{ height:8px; }
     .spacer10{ height:10px; }
@@ -169,7 +171,7 @@
   <div id="killsNeededTarget">—</div>
 
   <div class="spacer8"></div>
-  <div id="replacementKills">—</div>
+  <div id="replacementKills"><span class="muted"><b>Replacement helper:</b> Add games to calculate “what we need in the next counted game”.</span></div>
 </div>
 
 <div class="card">
@@ -512,12 +514,23 @@ function calcKillsNeededBlocks(teamRank, realPlayers){
 }
 
 function updateReplacementHelper(){
+  const el = document.getElementById("replacementKills");
   const rankTxt = document.getElementById("teamRank").textContent;
   const realPlayers = parseInt(document.getElementById("realPlayers").textContent || "0", 10);
   const targetTotal = parseFloat(document.getElementById("targetTotal").value || "0");
 
-  if(rankTxt === "–" || !isFinite(targetTotal)){
-    document.getElementById("replacementKills").innerHTML = "—";
+  if(rankTxt === "–"){
+    el.innerHTML = `<span class="muted"><b>Replacement helper:</b> Select players first.</span>`;
+    return;
+  }
+  if(!isFinite(targetTotal) || targetTotal < 0){
+    el.innerHTML = `<span class="muted"><b>Replacement helper:</b> Enter a valid target total.</span>`;
+    return;
+  }
+
+  // Need at least 3 games entered to do "best 3" math
+  if(games.length < 3){
+    el.innerHTML = `<span class="muted"><b>Replacement helper:</b> Add at least <b>${3 - games.length}</b> more game(s) to use your current <b>best 3</b> and calculate the required kills for the next counted game.</span>`;
     return;
   }
 
@@ -532,18 +545,18 @@ function updateReplacementHelper(){
   const need = targetTotal - best3Total;
 
   if(need <= 0){
-    document.getElementById("replacementKills").innerHTML =
-      `<b>Replacement helper:</b> Best 3 total <b>${best3Total.toFixed(2)}</b> meets/exceeds target <b>${targetTotal.toFixed(2)}</b>.`;
+    el.innerHTML =
+      `<b>Replacement helper:</b> Best 3 total <b>${best3Total.toFixed(2)}</b> already meets/exceeds target <b>${targetTotal.toFixed(2)}</b>.`;
     return;
   }
   if(need > MAX_POINTS){
-    document.getElementById("replacementKills").innerHTML =
-      `<b>Replacement helper:</b> Best 3 total <b>${best3Total.toFixed(2)}</b>. You’d need <b>${need.toFixed(2)}</b> points in the 4th game, but max is <b>45</b>.`;
+    el.innerHTML =
+      `<b>Replacement helper:</b> Best 3 total <b>${best3Total.toFixed(2)}</b>. You’d need <b>${need.toFixed(2)}</b> points in the next counted game, but max per game is <b>45</b>.`;
     return;
   }
 
   const kills = minKillsForTarget(need, placementKey, teamRank, realPlayers);
-  document.getElementById("replacementKills").innerHTML =
+  el.innerHTML =
     `<b>Replacement helper:</b> Best 3 total <b>${best3Total.toFixed(2)}</b>. To hit target <b>${targetTotal.toFixed(2)}</b>, you need <b>${need.toFixed(2)}</b> points in the next counted game. That’s about <b>${kills ?? "—"}</b> kills as <b>${placementLabel}</b>.`;
 }
 
