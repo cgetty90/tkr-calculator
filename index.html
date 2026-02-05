@@ -151,11 +151,17 @@
   <div class="grid grid-2" style="margin-bottom:10px;">
     <div>
       <label>Assumed placement</label>
-      <select id="assumedPlacement"></select>
+      <select id="assumedPlacement">
+  <option value="1st">1st</option>
+  <option value="2nd-3rd">2nd–3rd</option>
+  <option value="4th-5th">4th–5th</option>
+  <option value="6th-10th">6th–10th</option>
+  <option value="11th+">11th+</option>
+</select>
 
       <div class="spacer10"></div>
       <label>Milestones (+1 each)</label>
-      <input id="milestonesLabel" disabled/>
+      <input id="milestonesLabel" disabled value="60,70,75,80,85,95,100"/>
     </div>
 
     <div>
@@ -196,7 +202,7 @@
     While typing kills, sorting waits until you finish (blur/change).
   </div>
   <div class="muted" style="margin-top:5px;">
-    Saved on this device for <b>24 hours</b> or until the <b>RESET</b> button is pressed.
+    Saved on this device for <b>24 hours</b>.
   </div>
 </div>
 
