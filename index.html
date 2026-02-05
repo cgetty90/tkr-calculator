@@ -23,10 +23,6 @@
     .muted { opacity:.85; font-size:12px; }
     .row { display:flex; gap:10px; align-items:end; }
     .row > * { flex: 1; }
-    table { width:100%; border-collapse:collapse; }
-    th, td { border-bottom:1px solid #1f2a3a; padding:8px; text-align:left; font-size:13px;}
-    th { font-size:12px; opacity:.8; }
-    .right { text-align:right; }
   </style>
 </head>
 <body>
@@ -35,14 +31,28 @@
 
 <div class="card">
   <h3 style="margin-top:0;">Team Selection (4 slots)</h3>
-  <div class="grid grid-4">
-    <div><label>Player 1</label><select id="p1"></select></div>
-    <div><label>Player 2</label><select id="p2"></select></div>
-    <div><label>Player 3</label><select id="p3"></select></div>
-    <div><label>Player 4</label><select id="p4"></select></div>
-  </div>
 
-  <div id="rankBreakdown" style="margin-top:12px;"></div>
+  <!-- Searchable inputs using a shared datalist -->
+  <datalist id="playersList"></datalist>
+
+  <div class="grid grid-4">
+    <div>
+      <label>Player 1</label>
+      <input id="p1" list="playersList" placeholder="Type a name (or NONE)"/>
+    </div>
+    <div>
+      <label>Player 2</label>
+      <input id="p2" list="playersList" placeholder="Type a name (or NONE)"/>
+    </div>
+    <div>
+      <label>Player 3</label>
+      <input id="p3" list="playersList" placeholder="Type a name (or NONE)"/>
+    </div>
+    <div>
+      <label>Player 4</label>
+      <input id="p4" list="playersList" placeholder="Type a name (or NONE)"/>
+    </div>
+  </div>
 
   <div style="margin-top:10px">
     <span class="pill">Team Rank: <b id="teamRank">–</b></span>
@@ -51,7 +61,8 @@
   </div>
 
   <div class="muted" style="margin-top:8px;">
-    Choose <b>NONE</b> for any slot (rank counts as 0). If you have exactly <b>3 real players</b> (one NONE), the app adds <b>+0.15</b> to every placement multiplier.
+    Tip: start typing to filter the name list. Leave a slot blank or type <b>NONE</b> to count rank as 0.
+    If you have exactly <b>3 real players</b> (one NONE/blank), the app adds <b>+0.15</b> to every placement multiplier.
   </div>
 </div>
 
@@ -59,7 +70,6 @@
   <h3 style="margin-top:0;">Kills needed</h3>
 
   <div class="grid grid-2" style="margin-bottom:10px;">
-    <!-- Left: assumed placement + milestones under it -->
     <div>
       <label>Assumed placement</label>
       <select id="assumedPlacement"></select>
@@ -69,12 +79,11 @@
       <input id="milestonesLabel" disabled/>
     </div>
 
-    <!-- Right: target score -->
     <div>
       <label>Target total score (all games)</label>
       <input id="targetTotal" type="number" min="0" step="0.01" value="180"/>
       <div class="muted" style="margin-top:6px;">
-        Max games: <b>4</b> (so target per-game = target/4). Max points per game = <b>45</b>.
+        Max games: <b>4</b> (target per-game = target/4). Max points per game = <b>45</b>.
       </div>
     </div>
   </div>
@@ -97,7 +106,6 @@
 const MAX_GAMES = 4;
 const MAX_POINTS = 45;
 
-// Placement multipliers for 4 real players
 const PLACEMENTS = [
   { key: "1st",      label: "1st",      base: 2.25 },
   { key: "2nd-3rd",  label: "2nd–3rd",  base: 1.50 },
@@ -106,21 +114,21 @@ const PLACEMENTS = [
   { key: "11th+",    label: "11th+",    base: 0.75 },
 ];
 
-// Milestones add +1 point each when total team kills reaches the threshold
 const MILESTONES = [60,70,75,80,85,95,100];
 
 let rankings = [];
-let rankByName = new Map();
+let rankByNameLower = new Map(); // lower(name) -> rank
+let displayByNameLower = new Map(); // lower(name) -> canonical name
 let games = [];
 
 function milestonePoints(kills){
-  return MILESTONES.filter(m=>kills>=m).length;
+  const k = (typeof kills === "number" && isFinite(kills)) ? kills : 0;
+  return MILESTONES.filter(m=>k>=m).length;
 }
 
 function placementMulti(placementKey, realPlayers){
   const p = PLACEMENTS.find(x => x.key === placementKey) || PLACEMENTS[0];
-  const trioBonus = (realPlayers === 3) ? 0.15 : 0.0;
-  return p.base + trioBonus;
+  return p.base + ((realPlayers === 3) ? 0.15 : 0.0);
 }
 
 function parseCSVLine(line){
@@ -156,26 +164,47 @@ async function loadCSV() {
   if (nameIdx === -1 || rankIdx === -1) throw new Error("rankings.csv must have headers: name,rank");
 
   rankings = [];
-  rankByName = new Map();
+  rankByNameLower = new Map();
+  displayByNameLower = new Map();
 
   lines.forEach(l=>{
     const cols = parseCSVLine(l);
-    const nameRaw = cols[nameIdx] ?? "";
-    const rankRaw = cols[rankIdx] ?? "0";
-    const name = String(nameRaw).trim();
-    const rank = parseFloat(String(rankRaw).trim());
+    const name = String(cols[nameIdx] ?? "").trim();
+    const rank = parseFloat(String(cols[rankIdx] ?? "0").trim());
     if (!name) return;
-    const r = { name, rank: (isFinite(rank) ? rank : 0) };
-    rankings.push(r);
-    // If duplicates exist, last one wins.
-    rankByName.set(name, r.rank);
+    const r = isFinite(rank) ? rank : 0;
+    rankings.push({ name, rank: r });
+
+    const key = name.toLowerCase();
+    rankByNameLower.set(key, r);
+    displayByNameLower.set(key, name);
   });
 
   rankings.sort((a,b)=>a.name.localeCompare(b.name, undefined, {sensitivity:"base"}));
-
-  fillPlayers();
+  buildDatalist();
   fillPlacements();
+  hookInputs();
   document.getElementById("milestonesLabel").value = MILESTONES.join(", ");
+  updateTeam();
+}
+
+function buildDatalist(){
+  const dl = document.getElementById("playersList");
+  dl.innerHTML = "";
+
+  // NONE option
+  const none = document.createElement("option");
+  none.value = "NONE";
+  none.label = "NONE (0)";
+  dl.appendChild(none);
+
+  // Player options: show rank in label
+  rankings.forEach(r=>{
+    const opt = document.createElement("option");
+    opt.value = r.name;                // value user selects/types
+    opt.label = `${r.name} (${r.rank})`; // what shows in suggestion list
+    dl.appendChild(opt);
+  });
 }
 
 function fillPlacements(){
@@ -188,101 +217,73 @@ function fillPlacements(){
     s.appendChild(o);
   });
   s.value = "1st";
-  s.onchange = () => updateTeam();
+  s.onchange = () => { updateTeam(); };
 }
 
-function fillPlayers() {
-  const ids = ["p1","p2","p3","p4"];
-  ids.forEach(id=>{
-    const s=document.getElementById(id);
-    s.innerHTML="";
-    const none = document.createElement("option");
-    none.value = "__NONE__";
-    none.textContent = "NONE";
-    s.appendChild(none);
-
-    rankings.forEach(r=>{
-      const o=document.createElement("option");
-      o.value=r.name;
-      o.textContent=r.name;
-      s.appendChild(o);
-    });
-
-    s.onchange=updateTeam;
-    s.value="__NONE__";
+function hookInputs(){
+  ["p1","p2","p3","p4"].forEach(id=>{
+    const el = document.getElementById(id);
+    el.addEventListener("input", () => updateTeam());
+    el.addEventListener("change", () => updateTeam());
   });
-  updateTeam();
+
+  document.getElementById("targetTotal").addEventListener("input", () => {
+    const rankTxt = document.getElementById("teamRank").textContent;
+    if (rankTxt !== "–") calcKillsNeededBlocks(parseFloat(rankTxt), parseInt(document.getElementById("realPlayers").textContent || "0", 10));
+  });
+}
+
+function normalizeName(raw){
+  let v = String(raw ?? "").trim();
+  if (!v) return "";
+  // allow user to paste "Name (22)" -> strip the bracket part
+  const idx = v.lastIndexOf(" (");
+  if (idx > 0 && v.endsWith(")")) v = v.slice(0, idx).trim();
+  return v;
 }
 
 function computeTeam(){
   const ids = ["p1","p2","p3","p4"];
   let teamRank = 0;
   let realPlayers = 0;
-  const breakdown = [];
 
   ids.forEach(id=>{
-    const name = document.getElementById(id).value;
-    if (!name || name === "__NONE__"){
-      breakdown.push({ name: "NONE", rank: 0 });
-      return;
+    const typed = normalizeName(document.getElementById(id).value);
+    if (!typed) return;
+    if (typed.toLowerCase() === "none") return;
+
+    const key = typed.toLowerCase();
+    const r = rankByNameLower.get(key);
+    if (typeof r === "number"){
+      teamRank += r;
+      realPlayers += 1;
     }
-    const rank = rankByName.get(name) ?? 0;
-    breakdown.push({ name, rank });
-    teamRank += rank;
-    realPlayers += 1;
   });
 
-  return { teamRank, realPlayers, breakdown };
-}
-
-function renderBreakdown(breakdown){
-  const rows = breakdown.map(b => `
-    <tr>
-      <td>${escapeHtml(b.name)}</td>
-      <td class="right">${Number(b.rank).toFixed(2)}</td>
-    </tr>
-  `).join("");
-
-  document.getElementById("rankBreakdown").innerHTML = `
-    <table>
-      <thead><tr><th>Player</th><th class="right">Rank</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-  `;
-}
-
-function escapeHtml(s){
-  return String(s)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
+  return { teamRank, realPlayers };
 }
 
 function gamePointsFromKills(kills, placementKey, teamRank, realPlayers){
+  const k = (typeof kills === "number" && isFinite(kills)) ? kills : 0;
   const div = teamRank * 0.1;
   const multi = placementMulti(placementKey, realPlayers);
-  const raw = (kills * multi / div) + milestonePoints(kills);
+  const raw = (k * multi / div) + milestonePoints(k);
   return Math.min(MAX_POINTS, raw);
 }
 
 function minKillsForTarget(perGameTarget, placementKey, teamRank, realPlayers){
   if (perGameTarget <= 0) return 0;
-  if (perGameTarget > MAX_POINTS) return null; // impossible because game is capped
+  if (perGameTarget > MAX_POINTS) return null;
   let kills = 0;
   while (kills <= 5000){
-    const pts = gamePointsFromKills(kills, placementKey, teamRank, realPlayers);
-    if (pts >= perGameTarget) return kills;
+    if (gamePointsFromKills(kills, placementKey, teamRank, realPlayers) >= perGameTarget) return kills;
     kills++;
   }
   return null;
 }
 
 function updateTeam() {
-  const { teamRank, realPlayers, breakdown } = computeTeam();
-  renderBreakdown(breakdown);
-
+  const { teamRank, realPlayers } = computeTeam();
   document.getElementById("realPlayers").textContent = String(realPlayers);
 
   if (teamRank <= 0){
@@ -304,19 +305,16 @@ function updateTeam() {
 function calcKillsNeededBlocks(teamRank, realPlayers){
   const placementKey = document.getElementById("assumedPlacement").value || "1st";
   const placementLabel = PLACEMENTS.find(p=>p.key===placementKey)?.label || placementKey;
-
-  // 45-point max game
-  const k45 = minKillsForTarget(45, placementKey, teamRank, realPlayers);
   const multi = placementMulti(placementKey, realPlayers);
   const div = teamRank*0.1;
 
+  const k45 = minKillsForTarget(45, placementKey, teamRank, realPlayers);
   document.getElementById("killsNeeded45").innerHTML =
     `<b>${k45 ?? "—"}</b> kills needed for a <b>45-point</b> game as <b>${placementLabel}</b>.
      <div class="muted" style="margin-top:6px;">
        (Multiplier <b>${multi.toFixed(2)}</b>, divisor <b>${div.toFixed(2)}</b>, milestones included, capped at 45)
      </div>`;
 
-  // Target total score across all games
   const targetTotal = parseFloat(document.getElementById("targetTotal").value || "0");
   const perGameTarget = targetTotal / MAX_GAMES;
 
@@ -324,7 +322,6 @@ function calcKillsNeededBlocks(teamRank, realPlayers){
     document.getElementById("killsNeededTarget").innerHTML = `<span class="muted">Enter a valid target total.</span>`;
     return;
   }
-
   if (perGameTarget > MAX_POINTS){
     document.getElementById("killsNeededTarget").innerHTML =
       `<span class="muted">Target total <b>${targetTotal.toFixed(2)}</b> implies <b>${perGameTarget.toFixed(2)}</b> points/game, but max is <b>45</b>.</span>`;
@@ -338,7 +335,7 @@ function calcKillsNeededBlocks(teamRank, realPlayers){
 
 function addGame(){
   if (games.length >= MAX_GAMES) return;
-  games.push({ kills: 0, placement: "1st", points: 0 });
+  games.push({ kills: null, placement: "1st", points: 0 });
   renderGames();
   recalc();
 }
@@ -350,7 +347,13 @@ function removeGame(i){
 }
 
 function updateGameKills(i, val){
-  games[i].kills = Math.max(0, parseInt(val||0, 10));
+  const v = String(val ?? "").trim();
+  if (v === ""){
+    games[i].kills = null;
+  } else {
+    games[i].kills = Math.max(0, parseInt(v, 10));
+    if (!isFinite(games[i].kills)) games[i].kills = null;
+  }
   recalc();
 }
 
@@ -372,6 +375,8 @@ function renderGames(){
       return `<option value="${p.key}" ${sel}>${p.label}</option>`;
     }).join("");
 
+    const killsValue = (g.kills === null || typeof g.kills === "undefined") ? "" : String(g.kills);
+
     d.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
         <div style="font-weight:700;">Game ${i+1}</div>
@@ -381,7 +386,8 @@ function renderGames(){
       <div class="row" style="margin-top:10px;">
         <div>
           <label>Total team kills (combined)</label>
-          <input type="number" min="0" value="${g.kills}" onchange="updateGameKills(${i}, this.value)">
+          <input type="number" min="0" placeholder="Enter kills" value="${killsValue}"
+                 onchange="updateGameKills(${i}, this.value)" oninput="updateGameKills(${i}, this.value)">
         </div>
         <div>
           <label>Placement</label>
@@ -416,17 +422,7 @@ function recalc(){
   document.getElementById("totalPoints").textContent = total.toFixed(2);
   document.getElementById("remainingPoints").textContent = String(MAX_POINTS * (MAX_GAMES - games.length));
   renderGames();
-
-  // Also update kills-needed blocks when games change? Not needed, but when ranks/placement/target changes, yes.
 }
-
-document.getElementById("targetTotal").addEventListener("input", () => {
-  const rankTxt = document.getElementById("teamRank").textContent;
-  const realPlayers = parseInt(document.getElementById("realPlayers").textContent || "0", 10);
-  if (rankTxt !== "–"){
-    calcKillsNeededBlocks(parseFloat(rankTxt), realPlayers);
-  }
-});
 
 loadCSV().catch(e=>alert(e.message));
 </script>
