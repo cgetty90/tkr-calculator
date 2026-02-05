@@ -167,7 +167,54 @@
 
     .spacer8{ height:8px; }
     .spacer10{ height:10px; }
-  </style>
+  
+/* === Cinematic Esports Theme Enhancements === */
+
+/* Ambient background lighting */
+body::before{
+  content:"";
+  position:fixed;
+  inset:-20%;
+  background:
+    radial-gradient(circle at 15% 10%, rgba(64,200,255,.08), transparent 35%),
+    radial-gradient(circle at 85% 80%, rgba(64,200,255,.06), transparent 40%);
+  pointer-events:none;
+  z-index:-1;
+}
+
+/* Card depth + glass */
+.card{
+  background: linear-gradient(180deg, rgba(14,18,34,.94), rgba(8,10,20,.88));
+  backdrop-filter: blur(14px) saturate(120%);
+}
+
+/* Headings */
+h1, h3{
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+
+/* Subtle pulse for active helper */
+@keyframes softPulse{
+  0%,100%{ box-shadow:0 0 0 1px var(--glow); }
+  50%{ box-shadow:0 0 14px var(--glow); }
+}
+.pulse{
+  animation: softPulse 7s ease-in-out infinite;
+}
+
+/* Heat colouring (applied via JS) */
+.game-hot{ border-color:#40c8ff !important; }
+.game-mid{ border-color:#2aa6d6 !important; }
+.game-low{ border-color:#1e6f8f !important; }
+
+/* Match-ready dim */
+.dimmed{
+  opacity:.25;
+  filter: blur(1px);
+}
+
+</style>
 </head>
 <body>
 
