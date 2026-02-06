@@ -3,26 +3,26 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>The Krew – TKR Scoring Guide</title>
+  <title>The Krew • TKR Arena Scoring</title>
   <style>
     :root{
-      --bg:#04040a;
-      --text:#f4f7ff;
-      --muted: rgba(244,247,255,.72);
+      --bg:#07020f;
+      --text:#fff7fb;
+      --muted: rgba(255,247,251,.72);
 
-      --card: rgba(10,12,22,.88);
-      --card2: rgba(7,9,18,.92);
+      --card: rgba(18,6,28,.88);
+      --card2: rgba(12,4,20,.92);
 
-      --accent:#41d3ff;          /* arena cyan */
-      --accent2:#a855f7;         /* plasma violet */
-      --border: rgba(65, 211, 255, .22);
-      --border2: rgba(65, 211, 255, .55);
-      --glow: rgba(65, 211, 255, .16);
+      --accent:#ff3bd4;          /* neon magenta */
+      --accent2:#ffb000;         /* ember gold */
+      --border: rgba(255, 59, 212, .22);
+      --border2: rgba(255, 59, 212, .55);
+      --glow: rgba(255, 59, 212, .16);
 
-      --btn: rgba(65, 211, 255, .14);
-      --btnHover: rgba(65, 211, 255, .22);
+      --btn: rgba(255, 59, 212, .14);
+      --btnHover: rgba(255, 59, 212, .22);
 
-      --pillBg: rgba(7,9,18,.96);
+      --pillBg: rgba(12,4,20,.96);
     }
 
     *{ box-sizing:border-box; }
@@ -178,9 +178,9 @@ body::before{
   position:fixed;
   inset:-30%;
   background:
-    radial-gradient(circle at 20% 15%, rgba(65,211,255,.12), transparent 40%),
-    radial-gradient(circle at 80% 85%, rgba(168,85,247,.10), transparent 45%),
-    radial-gradient(circle at 60% 30%, rgba(65,211,255,.06), transparent 50%);
+    radial-gradient(circle at 20% 15%, rgba(255,59,212,.12), transparent 40%),
+    radial-gradient(circle at 80% 85%, rgba(255,176,0,.10), transparent 45%),
+    radial-gradient(circle at 60% 30%, rgba(255,59,212,.06), transparent 50%);
   filter: blur(2px);
   pointer-events:none;
   z-index:-2;
@@ -203,7 +203,7 @@ body::after{
     transparent 3px,
     transparent 6px
   );
-  opacity:.10;
+  opacity:.07;
   mix-blend-mode: overlay;
   pointer-events:none;
   z-index:-1;
@@ -212,9 +212,9 @@ body::after{
 /* Cards feel like panels */
 .card{
   background: linear-gradient(180deg, rgba(10,12,22,.92), rgba(7,9,18,.86));
-  border: 1px solid rgba(65,211,255,.18);
+  border: 1px solid rgba(255,59,212,.18);
   box-shadow:
-    0 0 0 1px rgba(65,211,255,.10),
+    0 0 0 1px rgba(255,59,212,.10),
     0 18px 50px rgba(0,0,0,.62);
   position:relative;
   overflow:hidden;
@@ -223,7 +223,7 @@ body::after{
   content:"";
   position:absolute;
   inset:-2px;
-  background: linear-gradient(90deg, rgba(65,211,255,.0), rgba(65,211,255,.10), rgba(168,85,247,.08), rgba(65,211,255,.0));
+  background: linear-gradient(90deg, rgba(255,59,212,.0), rgba(255,59,212,.10), rgba(255,176,0,.08), rgba(255,59,212,.0));
   opacity:.55;
   transform: translateX(-60%);
   animation: sheen 10s linear infinite;
@@ -238,7 +238,7 @@ body::after{
 h1{
   text-transform: uppercase;
   letter-spacing: .6px;
-  text-shadow: 0 0 22px rgba(65,211,255,.18);
+  text-shadow: 0 0 22px rgba(255,59,212,.18);
 }
 h3{
   text-transform: uppercase;
@@ -247,27 +247,27 @@ h3{
 
 /* Inputs: less border, more focus energy */
 input, select{
-  border: 1px solid rgba(65,211,255,.26);
-  box-shadow: 0 0 10px rgba(65,211,255,.06);
+  border: 1px solid rgba(255,59,212,.26);
+  box-shadow: 0 0 10px rgba(255,59,212,.06);
 }
 input:focus, select:focus{
-  border-color: rgba(65,211,255,.65);
-  box-shadow: 0 0 0 2px rgba(65,211,255,.22), 0 0 16px rgba(65,211,255,.14);
+  border-color: rgba(255,59,212,.65);
+  box-shadow: 0 0 0 2px rgba(255,59,212,.22), 0 0 16px rgba(255,59,212,.14);
 }
 
 /* Buttons */
 button{
-  border:1px solid rgba(65,211,255,.60);
-  box-shadow: 0 0 18px rgba(65,211,255,.10);
+  border:1px solid rgba(255,59,212,.60);
+  box-shadow: 0 0 18px rgba(255,59,212,.10);
 }
 button:hover{
-  box-shadow: 0 0 26px rgba(65,211,255,.18);
+  box-shadow: 0 0 26px rgba(255,59,212,.18);
 }
 
 /* Pills */
 .pill{
-  border-color: rgba(65,211,255,.50);
-  box-shadow: 0 0 14px rgba(65,211,255,.08);
+  border-color: rgba(255,59,212,.50);
+  box-shadow: 0 0 14px rgba(255,59,212,.08);
 }
 
 /* Progress meter */
@@ -275,9 +275,9 @@ button:hover{
   margin-top:10px;
   padding:10px;
   border-radius:14px;
-  border:1px solid rgba(65,211,255,.22);
+  border:1px solid rgba(255,59,212,.22);
   background: linear-gradient(180deg, rgba(7,9,18,.92), rgba(6,7,14,.92));
-  box-shadow: 0 0 18px rgba(65,211,255,.08);
+  box-shadow: 0 0 18px rgba(255,59,212,.08);
 }
 .meterTop{
   display:flex;
@@ -290,15 +290,15 @@ button:hover{
   height:12px;
   border-radius:999px;
   background: rgba(255,255,255,.06);
-  border:1px solid rgba(65,211,255,.18);
+  border:1px solid rgba(255,59,212,.18);
   overflow:hidden;
 }
 .meterFill{
   height:100%;
   width:0%;
   border-radius:999px;
-  background: linear-gradient(90deg, rgba(65,211,255,.95), rgba(168,85,247,.75));
-  box-shadow: 0 0 22px rgba(65,211,255,.18);
+  background: linear-gradient(90deg, rgba(255,59,212,.95), rgba(255,176,0,.75));
+  box-shadow: 0 0 22px rgba(255,59,212,.18);
   transition: width .35s ease;
 }
 .meterMeta{
@@ -311,15 +311,15 @@ button:hover{
   border-color: rgba(255,255,255,.10);
 }
 .gameRow.counted{
-  border-color: rgba(65,211,255,.55);
-  box-shadow: 0 0 0 1px rgba(65,211,255,.14), 0 0 22px rgba(65,211,255,.10);
+  border-color: rgba(255,59,212,.55);
+  box-shadow: 0 0 0 1px rgba(255,59,212,.14), 0 0 22px rgba(255,59,212,.10);
 }
 .gameRow.game-hot{
-  border-color: rgba(65,211,255,.75) !important;
-  box-shadow: 0 0 0 1px rgba(65,211,255,.18), 0 0 28px rgba(65,211,255,.14);
+  border-color: rgba(255,59,212,.75) !important;
+  box-shadow: 0 0 0 1px rgba(255,59,212,.18), 0 0 28px rgba(255,59,212,.14);
 }
 .gameRow.game-mid{
-  border-color: rgba(65,211,255,.40) !important;
+  border-color: rgba(255,59,212,.40) !important;
 }
 .gameRow.game-low{
   border-color: rgba(255,255,255,.12) !important;
@@ -330,23 +330,49 @@ button:hover{
   padding:3px 8px;
   border-radius:999px;
   font-size:12px;
-  border:1px solid rgba(65,211,255,.45);
+  border:1px solid rgba(255,59,212,.45);
   background: rgba(7,9,18,.92);
   color: var(--text);
 }
 .badge.top{
-  border-color: rgba(65,211,255,.70);
-  box-shadow: 0 0 18px rgba(65,211,255,.12);
+  border-color: rgba(255,59,212,.70);
+  box-shadow: 0 0 18px rgba(255,59,212,.12);
+}
+
+
+/* Header accent bar */
+h3{
+  position:relative;
+  padding-bottom:8px;
+}
+h3::after{
+  content:"";
+  position:absolute;
+  left:0;
+  bottom:0;
+  width:160px;
+  height:3px;
+  border-radius:999px;
+  background: linear-gradient(90deg, rgba(255,59,212,.9), rgba(255,176,0,.85));
+  box-shadow: 0 0 18px rgba(255,59,212,.14);
+}
+h1{
+  background: linear-gradient(90deg, rgba(255,59,212,1), rgba(255,176,0,1));
+  -webkit-background-clip: text;
+  background-clip:text;
+  color: transparent;
+  text-shadow:none;
 }
 
 </style>
 </head>
 <body>
 
-<h1>The Krew – TKR Scoring Guide</h1>
+<h1>The Krew • TKR Arena Scoring</h1>
+<div class="muted" style="margin:-6px 0 14px 0;">Build your squad, set a target, log matches — best 4 games count.</div>
 
 <div class="card">
-  <h3>Team Selection (4 slots)</h3>
+  <h3>Squad Builder (4 slots)</h3>
 
   <datalist id="playersList"></datalist>
 
@@ -374,9 +400,9 @@ button:hover{
   </div>
 
   <div style="margin-top:10px">
-    <span class="pill">Team Rank: <b id="teamRank">–</b></span>
-    <span class="pill">Real players: <b id="realPlayers">0</b></span>
-    <span class="pill">Divisor (0.1×rank): <b id="divisor">–</b></span>
+    <span class="pill">Squad Rank: <b id="teamRank">–</b></span>
+    <span class="pill">Active Players: <b id="realPlayers">0</b></span>
+    <span class="pill">Rank Divisor (÷10): <b id="divisor">–</b></span>
   </div>
 
   <div class="muted" style="margin-top:8px;">
@@ -386,7 +412,7 @@ button:hover{
 </div>
 
 <div class="card">
-  <h3>Kills needed</h3>
+  <h3>Kill Targets</h3>
 
   <div class="grid grid-2" style="margin-bottom:10px;">
     <div>
@@ -419,14 +445,14 @@ button:hover{
 </div>
 
 <div class="card">
-  <h3>Games (unlimited entries, counts best 4)</h3>
+  <h3>Match Log (unlimited, best 4 count)</h3>
 
   <div id="games" style="margin-top:10px;"></div>
 
   <div style="margin-top:10px">
     <span class="pill">Best 4 Total: <b id="best4Total">0.00</b></span>
     <span class="pill">Remaining Possible: <b id="remainingPossible">180.00</b></span>
-    <span class="pill">Games Entered: <b id="gamesEntered">0</b></span>
+    <span class="pill">Matches Logged: <b id="gamesEntered">0</b></span>
   </div>
 
   <div class="meterWrap" id="meterWrap">
@@ -439,7 +465,7 @@ button:hover{
   </div>
 
   <div class="spacer8"></div>
-  <div id="replacementBox" class="muted"><b>Replacement helper:</b> Add games to see what you need to hit the target.</div>
+  <div id="replacementBox" class="muted"><b>Replacement Calculator:</b> Add games to see what you need to hit the target.</div>
 
   <div class="muted" style="margin-top:8px;">
     Remaining Possible = (4 × 45) − (best-4 total). Games are sorted by points (highest first).
@@ -926,11 +952,11 @@ function updateReplacementHelper(){
   const targetTotal = parseFloat(document.getElementById("targetTotal").value || "0");
 
   if(rankTxt === "–"){
-    box.innerHTML = `<b>Replacement helper:</b> Select players to calculate.`;
+    box.innerHTML = `<b>Replacement Calculator:</b> Select players to calculate.`;
     return;
   }
   if(!isFinite(targetTotal) || targetTotal < 0){
-    box.innerHTML = `<b>Replacement helper:</b> Enter a valid target total.`;
+    box.innerHTML = `<b>Replacement Calculator:</b> Enter a valid target total.`;
     return;
   }
 
@@ -955,14 +981,14 @@ function updateReplacementHelper(){
 
   if(best4Total >= targetTotal){
     box.innerHTML =
-      `<b>Replacement helper:</b> Target <b>${targetTotal.toFixed(2)}</b> is met with best 4 total <b>${best4Total.toFixed(2)}</b>. ` +
+      `<b>Replacement Calculator:</b> Target <b>${targetTotal.toFixed(2)}</b> is met with best 4 total <b>${best4Total.toFixed(2)}</b>. ` +
       `<span class="muted">4th best game:</span> <b>${fourthTxt}</b>.`;
     return;
   }
 
   // If 4 games not yet entered, still show guidance
   if(games.length < 3){
-    box.innerHTML = `<b>Replacement helper:</b> Add at least <b>${3 - games.length}</b> more game(s) to calculate replacements.`;
+    box.innerHTML = `<b>Replacement Calculator:</b> Add at least <b>${3 - games.length}</b> more game(s) to calculate replacements.`;
     return;
   }
 
