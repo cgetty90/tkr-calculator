@@ -142,7 +142,6 @@
     /* Autocomplete dropdown */
     .playerWrap{ position:relative; }
     .suggestions{
-      pointer-events:auto;
       position:absolute;
       top:calc(100% + 6px);
       left:0; right:0;
@@ -372,7 +371,7 @@ h1{
     .card{ z-index: 0; }
     .card.dropdownOpen{ z-index: 50; }
     .playerWrap{ z-index: 1; }
-    .suggestions{ z-index: 100000; }
+    .suggestions{ z-index: 10000; }
 
 
     /* Replacement Calculator emphasis */
@@ -491,14 +490,14 @@ h1{
     .ppName{ font-weight:700; }
     .ppRank{
       font-size:12px;
-      opacity:.8;
+      opacity:.85;
       border:1px solid rgba(255,176,0,.45);
       border-radius:999px;
       padding:2px 8px;
       white-space:nowrap;
       background: rgba(12,4,20,.96);
     }
-    
+
 </style>
 </head>
 <body>
@@ -517,22 +516,22 @@ h1{
   <div class="grid grid-4">
     <div class="playerWrap">
       <label>Player 1</label>
-      <input class="playerInput" id="p1" placeholder="Type a name (or NONE)" autocomplete="off" autocapitalize="off" spellcheck="false" readonly />
+      <input class="playerInput" id="p1" placeholder="Type a name (or NONE)" autocomplete="off" autocapitalize="off" spellcheck="false"/>
       <div class="suggestions" id="sug-p1"></div>
     </div>
     <div class="playerWrap">
       <label>Player 2</label>
-      <input class="playerInput" id="p2" placeholder="Type a name (or NONE)" autocomplete="off" autocapitalize="off" spellcheck="false" readonly />
+      <input class="playerInput" id="p2" placeholder="Type a name (or NONE)" autocomplete="off" autocapitalize="off" spellcheck="false"/>
       <div class="suggestions" id="sug-p2"></div>
     </div>
     <div class="playerWrap">
       <label>Player 3</label>
-      <input class="playerInput" id="p3" placeholder="Type a name (or NONE)" autocomplete="off" autocapitalize="off" spellcheck="false" readonly />
+      <input class="playerInput" id="p3" placeholder="Type a name (or NONE)" autocomplete="off" autocapitalize="off" spellcheck="false"/>
       <div class="suggestions" id="sug-p3"></div>
     </div>
     <div class="playerWrap">
       <label>Player 4</label>
-      <input class="playerInput" id="p4" placeholder="Type a name (or NONE)" autocomplete="off" autocapitalize="off" spellcheck="false" readonly />
+      <input class="playerInput" id="p4" placeholder="Type a name (or NONE)" autocomplete="off" autocapitalize="off" spellcheck="false"/>
       <div class="suggestions" id="sug-p4"></div>
     </div>
   </div>
@@ -610,7 +609,7 @@ h1{
   <!-- Buttons moved to bottom -->
   <div class="row">
     <button id="addGameBtn" type="button">Add Game</button>
-    <button id="resetBtn" type="button" type="button" title="Resets players, games, and target score">Reset</button>
+    <button id="resetBtn" type="button" type="button" type="button" title="Resets players, games, and target score">Reset</button>
   </div>
 </div>
 
@@ -696,7 +695,8 @@ h1{
     <div class="spacer10"></div>
 
     <label>Search</label>
-    <input id="ppSearch" type="search" inputmode="search" enterkeyhint="search" placeholder="Type a name..." autocomplete="off" autocapitalize="off" spellcheck="false"/>
+    <input id="ppSearch" type="search" inputmode="search" enterkeyhint="search"
+           placeholder="Type a name..." autocomplete="off" autocapitalize="off" spellcheck="false"/>
 
     <div class="spacer10"></div>
 
@@ -748,9 +748,65 @@ function unescapeHtml(str){
   t.innerHTML = str;
   return t.value;
 }
+
+let pickerForInputId = null;
+
+function openPlayerPicker(inputId){
+  const overlay = document.getElementById("playerPickerModal");
+  const search = document.getElementById("ppSearch");
+  if(!overlay || !search) return;
+
+  pickerForInputId = inputId;
+  overlay.style.display = "flex";
+  search.value = "";
+  renderPlayerPickerList("");
+
+  try{ search.focus(); }catch(e){}
+}
+
+function closePlayerPicker(){
+  const overlay = document.getElementById("playerPickerModal");
+  if(!overlay) return;
+  overlay.style.display = "none";
+  pickerForInputId = null;
+}
+
+function renderPlayerPickerList(term){
+  const list = document.getElementById("ppList");
+  if(!list) return;
+
+  const t = (term || "").trim().toLowerCase();
+  const rows = players
+    .filter(p => t === "" || p.name.toLowerCase().includes(t))
+    .slice(0, 250);
+
+  list.innerHTML = "";
+
+  rows.forEach(p => {
+    const div = document.createElement("div");
+    div.className = "ppItem";
+    div.innerHTML = `<div class="ppName">${escapeHtml(p.name)}</div><div class="ppRank">${escapeHtml(String(p.rank))}</div>`;
+
+    const pick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if(!pickerForInputId) return;
+      const input = document.getElementById(pickerForInputId);
+      if(input) input.value = p.name;
+      closePlayerPicker();
+      updateTeam(true);
+      saveState();
+    };
+
+    div.addEventListener("click", pick);
+    div.addEventListener("touchend", pick, {passive:false});
+    list.appendChild(div);
+  });
+}
+
 // Replacement notification trigger
 let replaceNotifyPending = false;
-let selectingSuggestion = false;
+const IS_MOBILE = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
 
 function showReplaceModal(html){
   const overlay = document.getElementById("replaceModal");
@@ -784,65 +840,6 @@ function hideGameModal(){
   if(!overlay) return;
   overlay.style.display = "none";
 }
-
-let pickerForInputId = null;
-
-function openPlayerPicker(inputId){
-  const overlay = document.getElementById("playerPickerModal");
-  const search = document.getElementById("ppSearch");
-  if(!overlay || !search) return;
-
-  pickerForInputId = inputId;
-
-  overlay.style.display = "flex";
-  search.value = "";
-  renderPlayerPickerList("");
-
-  // Focus immediately (within the user tap) so mobile keyboards open reliably
-  try{ search.focus(); }catch(e){}
-}
-
-function closePlayerPicker(){
-  const overlay = document.getElementById("playerPickerModal");
-  if(!overlay) return;
-  overlay.style.display = "none";
-  pickerForInputId = null;
-}
-
-function renderPlayerPickerList(term){
-  const list = document.getElementById("ppList");
-  if(!list) return;
-
-  const t = (term || "").trim().toLowerCase();
-  const rows = players
-    .filter(p => t === "" || p.name.toLowerCase().includes(t))
-    .slice(0, 200); // safety
-
-  list.innerHTML = "";
-
-  rows.forEach(p => {
-    const div = document.createElement("div");
-    div.className = "ppItem";
-    div.innerHTML = `<div class="ppName">${escapeHtml(p.name)}</div><div class="ppRank">${escapeHtml(String(p.rank))}</div>`;
-    // touch + click safe
-    const pick = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if(!pickerForInputId) return;
-      const input = document.getElementById(pickerForInputId);
-      if(input){
-        input.value = p.name;
-      }
-      closePlayerPicker();
-      updateTeam(true);
-      saveState();
-    };
-    div.addEventListener("click", pick);
-    div.addEventListener("touchend", pick, {passive:false});
-    list.appendChild(div);
-  });
-}
-
 
 
 function parseCSVLine(line){
@@ -1074,6 +1071,7 @@ function getRankForName(name){
   return (typeof r === "number") ? r : null;
 }
 function showSuggestions(inputId){
+  if(IS_MOBILE) return;
   const input = document.getElementById(inputId);
   const box = document.getElementById("sug-" + inputId);
   if(!input || !box) return;
@@ -1109,40 +1107,15 @@ function showSuggestions(inputId){
     return `<div class="suggestionItem" data-name="${escapeHtml(name)}" data-idx="${idx}">${escapeHtml(name)} ${meta}</div>`;
   }).join("");
 
-    // Mobile-friendly selection: event delegation (works on iOS/Android)
-  box.onpointerdown = (e) => {
-    const item = e.target.closest ? e.target.closest(".suggestionItem") : null;
-    if(!item) return;
-    selectingSuggestion = true;
-    e.preventDefault();
-    e.stopPropagation();
-    const name = item.getAttribute("data-name");
-    input.value = unescapeHtml(name);
-    hideSuggestions(inputId);
-    updateTeam(true);
-    saveState();
-    setTimeout(()=> selectingSuggestion = false, 0);
-  };
-  box.ontouchstart = (e) => {
-    const t = e.target;
-    const item = t && t.closest ? t.closest(".suggestionItem") : null;
-    if(!item) return;
-    selectingSuggestion = true;
-    e.preventDefault();
-    e.stopPropagation();
-    const name = item.getAttribute("data-name");
-    input.value = unescapeHtml(name);
-    hideSuggestions(inputId);
-    updateTeam(true);
-    saveState();
-    setTimeout(()=> selectingSuggestion = false, 0);
-  };
-    item.addEventListener("touchstart", (e) => {
-      selectingSuggestion = true;
-      e.preventDefault();
-      pick();
-      setTimeout(()=> selectingSuggestion = false, 0);
-    }, {passive:false});
+  box.querySelectorAll(".suggestionItem").forEach(item=>{
+    item.addEventListener("mousedown", (e) => { e.preventDefault(); }); // prevent blur before click
+    item.addEventListener("click", () => {
+      const name = item.getAttribute("data-name");
+      input.value = unescapeHtml(name);
+      hideSuggestions(inputId);
+      updateTeam(true);
+      saveState();
+    });
   });
 
   box.dataset.active = "-1";
@@ -1202,11 +1175,6 @@ function handleSuggestKeys(e, inputId){
 
 // ===== UI & interactions =====
 function hookInputs(){
-  const ppCancel = document.getElementById("ppCancel");
-  if(ppCancel) ppCancel.addEventListener("click", () => closePlayerPicker());
-  const ppSearch = document.getElementById("ppSearch");
-  if(ppSearch) ppSearch.addEventListener("input", (e) => renderPlayerPickerList(e.target.value));
-
   const okBtn = document.getElementById("replaceModalOk");
   if(okBtn) okBtn.addEventListener("click", () => hideReplaceModal());
   const gmCancel = document.getElementById("gmCancel");
@@ -1225,8 +1193,8 @@ function hookInputs(){
     el.addEventListener("keydown", (e) => handleSuggestKeys(e, id));
     el.addEventListener("change", () => updateTeam(true));
     el.addEventListener("blur", () => {
-      // On mobile, tapping a suggestion causes blur first. Don’t close if we are selecting.
-      setTimeout(() => { if(!selectingSuggestion) hideSuggestions(id); }, 450);
+      setTimeout(() => hideSuggestions(id), 120);
+      updateTeam(true);
     });
   });
 
