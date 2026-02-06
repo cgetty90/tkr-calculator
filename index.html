@@ -368,11 +368,11 @@ h1{
 </head>
 <body>
 
-<h1>The Krew • TKR Arena Scoring</h1>
-<div class="muted" style="margin:-6px 0 14px 0;">Build your squad, set a target, log matches — best 4 games count.</div>
+<h1>THE KREW • TKR SCORING</h1>
+<div class="muted" style="margin:-6px 0 14px 0;"></div>
 
 <div class="card">
-  <h3>Squad Builder (4 slots)</h3>
+  <h3>SQUAD BUILDER</h3>
 
   <datalist id="playersList"></datalist>
 
@@ -405,14 +405,9 @@ h1{
     <span class="pill">Rank Divisor (÷10): <b id="divisor">–</b></span>
   </div>
 
-  <div class="muted" style="margin-top:8px;">
-    Tip: start typing to filter names. Leave blank or type <b>NONE</b> to count rank as 0.
-    If you have exactly <b>3 real players</b>, the app adds <b>+0.15</b> to every placement multiplier.
   </div>
-</div>
-
 <div class="card">
-  <h3>Kill Targets</h3>
+  <h3>KILL TARGETS</h3>
 
   <div class="grid grid-2" style="margin-bottom:10px;">
     <div>
@@ -445,7 +440,7 @@ h1{
 </div>
 
 <div class="card">
-  <h3>Match Log (unlimited, best 4 count)</h3>
+  <h3>MATCH LOG</h3>
 
   <div id="games" style="margin-top:10px;"></div>
 
@@ -465,7 +460,6 @@ h1{
   </div>
 
   <div class="spacer8"></div>
-  <div id="replacementBox" class="muted"><b>Replacement Calculator:</b> Add games to see what you need to hit the target.</div>
 
   <div class="muted" style="margin-top:8px;">
     Remaining Possible = (4 × 45) − (best-4 total). Games are sorted by points (highest first).
@@ -482,7 +476,32 @@ h1{
   </div>
 </div>
 
-<script>
+
+<div class="card" id="replacementCard" style="display:none;">
+  <h3>REPLACEMENT CALCULATOR</h3>
+  <div class="muted" style="margin-top:6px;">
+    This section only appears once you’ve logged at least <b>4</b> matches.
+  </div>
+
+  <div class="spacer10"></div>
+
+  <div class="grid grid-2">
+    <div class="meterWrap">
+      <div class="meterMeta"><b>Status</b></div>
+      <div class="spacer8"></div>
+      <div id="replaceSummary" class="muted">—</div>
+    </div>
+
+    <div class="meterWrap">
+      <div class="meterMeta"><b>What to do next</b></div>
+      <div class="spacer8"></div>
+      <div id="replacePlan" class="muted">—</div>
+    </div>
+  </div>
+</div>
+
+
+<script
 const COUNTED_GAMES = 4;
 const MAX_POINTS = 45;
 
@@ -944,19 +963,30 @@ function calcKillsNeededBlocks(teamRank, realPlayers){
 }
 
 function updateReplacementHelper(){
-  const box = document.getElementById("replacementBox");
-  if(!box) return;
+  const card = document.getElementById("replacementCard");
+  const summaryEl = document.getElementById("replaceSummary");
+  const planEl = document.getElementById("replacePlan");
+  if(!card || !summaryEl || !planEl) return;
+
+  // Only show once 4+ games are logged
+  if(games.length < 4){
+    card.style.display = "none";
+    return;
+  }
+  card.style.display = "block";
 
   const rankTxt = document.getElementById("teamRank").textContent;
   const realPlayers = parseInt(document.getElementById("realPlayers").textContent || "0", 10);
-  const targetTotal = parseFloat(document.getElementById("targetTotal").value || "0");
+  const targetTotal = parseFloat(document.getElementById("targetTotal").value || String(COUNTED_GAMES * MAX_POINTS));
 
   if(rankTxt === "–"){
-    box.innerHTML = `<b>Replacement Calculator:</b> Select players to calculate.`;
+    summaryEl.innerHTML = `<b>Select players</b> to calculate replacement requirements.`;
+    planEl.textContent = "—";
     return;
   }
   if(!isFinite(targetTotal) || targetTotal < 0){
-    box.innerHTML = `<b>Replacement Calculator:</b> Enter a valid target total.`;
+    summaryEl.innerHTML = `<b>Enter a valid target total</b>.`;
+    planEl.textContent = "—";
     return;
   }
 
@@ -967,71 +997,84 @@ function updateReplacementHelper(){
   const sorted = [...games].sort((a,b)=> (b.points - a.points) || (a.id - b.id));
   const best4 = sorted.slice(0, 4);
   const best4Total = best4.reduce((s,g)=>s+g.points, 0);
-  const meterWrap = document.getElementById("meterWrap");
-  if(meterWrap){
-    meterWrap.classList.toggle("pulse", best4Total < targetTotal);
+
+  // How many games need replacing? (how many of the best4 must improve to hit target)
+  const gap = targetTotal - best4Total;
+  let gamesToReplace = 0;
+  if(gap <= 0){
+    gamesToReplace = 0;
+  }else if(gap <= 45){
+    gamesToReplace = 1;
+  }else if(gap <= 90){
+    gamesToReplace = 2;
+  }else if(gap <= 135){
+    gamesToReplace = 3;
+  }else{
+    gamesToReplace = 4;
   }
 
-
+  // Build a readable summary
   const fourth = best4[3];
-  const fourthPts = fourth ? fourth.points : 0;
   const fourthTxt = fourth
-    ? `${fourthPts.toFixed(2)} pts (${(fourth.killsInt ?? 0)} kills, ${(PLACEMENTS.find(p=>p.key===fourth.placement)?.label || fourth.placement)})`
+    ? `${fourth.points.toFixed(2)} pts • ${fourth.killsInt ?? 0} kills • ${PLACEMENTS.find(p=>p.key===fourth.placement)?.label || fourth.placement}`
     : "—";
 
-  if(best4Total >= targetTotal){
-    box.innerHTML =
-      `<b>Replacement Calculator:</b> Target <b>${targetTotal.toFixed(2)}</b> is met with best 4 total <b>${best4Total.toFixed(2)}</b>. ` +
-      `<span class="muted">4th best game:</span> <b>${fourthTxt}</b>.`;
+  summaryEl.innerHTML =
+    `Target: <b>${targetTotal.toFixed(2)}</b><br>` +
+    `Current best 4 total: <b>${best4Total.toFixed(2)}</b><br>` +
+    `4th best game: <b>${fourthTxt}</b><br>` +
+    (gamesToReplace === 0
+      ? `<span style="color:var(--text);"><b>✅ Target met.</b></span>`
+      : `<b>${gamesToReplace}</b> game(s) likely need replacing to reach target.`);
+
+  // Build the plan
+  if(gamesToReplace === 0){
+    planEl.innerHTML = `You’re good. If you want to improve, aim to replace your current 4th best game (<b>${fourth.points.toFixed(2)} pts</b>) with a higher score.`;
     return;
   }
 
-  // If 4 games not yet entered, still show guidance
-  if(games.length < 3){
-    box.innerHTML = `<b>Replacement Calculator:</b> Add at least <b>${3 - games.length}</b> more game(s) to calculate replacements.`;
-    return;
-  }
-
-  // Try best 3 + 1 replacement
+  // Strategy:
+  // If 1 game can close it: use best3 + needed
+  // Else: best2 + 2 games split suggestions
   const best3 = sorted.slice(0, 3);
   const best3Total = best3.reduce((s,g)=>s+g.points, 0);
-  let need = targetTotal - best3Total;
+  const need1 = targetTotal - best3Total;
 
-  if(need <= MAX_POINTS){
-    const kills = minKillsForTarget(need, placementKey, teamRank, realPlayers);
-    const improve = Math.max(0, need - fourthPts);
-    const improveTxt = (fourth ? ` You need <b>+${improve.toFixed(2)}</b> pts over your current 4th best.` : "");
-    box.innerHTML =
-      `<b>Replacement helper (1 game):</b> Best 3 total <b>${best3Total.toFixed(2)}</b>. 4th best: <b>${fourthTxt}</b>.<br>` +
-      `To reach target <b>${targetTotal.toFixed(2)}</b>, the 4th counted game must be about <b>${need.toFixed(2)}</b> pts → ~<b>${kills ?? "—"}</b> kills if you place <b>${placementLabel}</b>.` +
-      improveTxt;
+  if(need1 <= MAX_POINTS){
+    const kills = minKillsForTarget(need1, placementKey, teamRank, realPlayers);
+    const improve = Math.max(0, need1 - (fourth ? fourth.points : 0));
+    planEl.innerHTML =
+      `To hit the target, your <b>4th counted game</b> needs about <b>${need1.toFixed(2)} pts</b>.<br>` +
+      `That’s roughly <b>${kills ?? "—"}</b> kills if you place <b>${placementLabel}</b>.<br>` +
+      (fourth ? `That’s <b>+${improve.toFixed(2)} pts</b> better than your current 4th best.` : ``);
     return;
   }
 
-  // Else best 2 + 2 replacement games
+  // Two-game replacement plan
   const best2 = sorted.slice(0, 2);
   const best2Total = best2.reduce((s,g)=>s+g.points, 0);
-  need = targetTotal - best2Total;
+  const need2 = targetTotal - best2Total;
 
-  if(need > 2 * MAX_POINTS){
-    box.innerHTML =
-      `<b>Replacement helper (2 games):</b> Even using best 2 total <b>${best2Total.toFixed(2)}</b>, you’d need <b>${need.toFixed(2)}</b> points across the next 2 counted games. ` +
-      `Max is <b>${(2*MAX_POINTS).toFixed(0)}</b> (2×45), so this target isn’t possible with 2 replacement games.`;
+  if(need2 > 2 * MAX_POINTS){
+    planEl.innerHTML =
+      `Even replacing <b>2 games</b>, you’d need <b>${need2.toFixed(2)}</b> points across two games, but max is <b>90</b> (2×45).<br>` +
+      `Try lowering the target or improving more than two games.`;
     return;
   }
 
-  const even = need / 2;
+  const even = need2 / 2;
   const evenKills = minKillsForTarget(even, placementKey, teamRank, realPlayers);
 
-  const firstA = Math.min(MAX_POINTS, need);
-  const secondA = Math.max(0, need - firstA);
+  const firstA = Math.min(MAX_POINTS, need2);
+  const secondA = Math.max(0, need2 - firstA);
   const kA1 = minKillsForTarget(firstA, placementKey, teamRank, realPlayers);
   const kA2 = minKillsForTarget(secondA, placementKey, teamRank, realPlayers);
 
-  box.innerHTML =
-    `<b>Replacement helper (2 games):</b> Best 2 total <b>${best2Total.toFixed(2)}</b>. Need <b>${need.toFixed(2)}</b> points across the next 2 counted games.<br>` +
-    `Option A (even split): <b>${even.toFixed(2)}</b> pts each → ~<b>${evenKills ?? "—"}</b> kills/game as <b>${placementLabel}</b>.<br>` +
-    `Option B (one big + cleanup): <b>${firstA.toFixed(2)}</b> pts then <b>${secondA.toFixed(2)}</b> pts → ~<b>${kA1 ?? "—"}</b> kills then ~<b>${kA2 ?? "—"}</b> kills.`;
+  planEl.innerHTML =
+    `One game isn’t enough. You likely need to replace <b>2 games</b>.<br>` +
+    `Total points needed across 2 games: <b>${need2.toFixed(2)}</b> (max 90).<br><br>` +
+    `<b>Option A:</b> even split → <b>${even.toFixed(2)} pts</b> each ≈ <b>${evenKills ?? "—"}</b> kills/game as <b>${placementLabel}</b>.<br>` +
+    `<b>Option B:</b> one big + cleanup → <b>${firstA.toFixed(2)} pts</b> then <b>${secondA.toFixed(2)} pts</b> ≈ <b>${kA1 ?? "—"}</b> kills then <b>${kA2 ?? "—"}</b> kills.`;
 }
 
 function updateTeam(forceSort){
