@@ -696,7 +696,7 @@ h1{
     <div class="spacer10"></div>
 
     <label>Search</label>
-    <input id="ppSearch" type="search" placeholder="Type a name..." autocomplete="off" autocapitalize="off" spellcheck="false"/>
+    <input id="ppSearch" type="search" inputmode="search" enterkeyhint="search" placeholder="Type a name..." autocomplete="off" autocapitalize="off" spellcheck="false"/>
 
     <div class="spacer10"></div>
 
@@ -790,18 +790,16 @@ let pickerForInputId = null;
 function openPlayerPicker(inputId){
   const overlay = document.getElementById("playerPickerModal");
   const search = document.getElementById("ppSearch");
-  const list = document.getElementById("ppList");
-  if(!overlay || !search || !list) return;
+  if(!overlay || !search) return;
 
   pickerForInputId = inputId;
 
-  // Build list
-  const term = "";
-  renderPlayerPickerList(term);
-
   overlay.style.display = "flex";
   search.value = "";
-  setTimeout(() => { try{ search.focus(); }catch(e){} }, 50);
+  renderPlayerPickerList("");
+
+  // Focus immediately (within the user tap) so mobile keyboards open reliably
+  try{ search.focus(); }catch(e){}
 }
 
 function closePlayerPicker(){
