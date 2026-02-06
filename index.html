@@ -687,7 +687,7 @@ function gamePointsFromKills(kills, placementKey, teamRank, realPlayers){
   const k = (typeof kills === "number" && isFinite(kills)) ? kills : 0;
   const div = teamRank * 0.1;
   const multi = placementMulti(placementKey, realPlayers);
-  const raw = (k * multi / div) + milestonePoints(k);
+  const raw = (k * multi / div) + ((placementKey === "1st") ? milestonePoints(k) : 0);
   return Math.min(MAX_POINTS, raw);
 }
 
