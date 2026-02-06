@@ -167,6 +167,20 @@
     }
     .suggestionMeta{ color: var(--muted); font-size:12px; margin-left:6px; }
 
+
+    /* Mobile: suggestions render as fixed overlay above everything */
+    .suggestions.fixed{
+      position: fixed !important;
+      left: 12px !important;
+      right: auto !important;
+      top: 0;
+      width: calc(100vw - 24px) !important;
+      max-height: 45vh !important;
+      overflow:auto;
+      z-index: 99999 !important;
+      pointer-events: auto;
+    }
+
     .spacer8{ height:8px; }
     .spacer10{ height:10px; }
   
@@ -366,138 +380,6 @@ h1{
 
 
     /* (datalist doesn't render, but kept for JS compatibility) */
-
-    /* Ensure autocomplete dropdown can float above following cards */
-    .card{ z-index: 0; }
-    .card.dropdownOpen{ z-index: 50; }
-    .playerWrap{ z-index: 1; }
-    .suggestions{ z-index: 10000; }
-
-
-    /* Replacement Calculator emphasis */
-    #replacementCard{
-      border: 1px solid rgba(255, 176, 0, .55);
-      box-shadow:
-        0 0 0 1px rgba(255,176,0,.18),
-        0 0 28px rgba(255,176,0,.14),
-        0 18px 50px rgba(0,0,0,.62);
-    }
-    #replacementCard::after{
-      content:"";
-      position:absolute;
-      inset:0;
-      border-radius:12px;
-      pointer-events:none;
-      box-shadow: inset 0 0 0 1px rgba(255,176,0,.12);
-      opacity:.9;
-    }
-    @keyframes alertPulse{
-      0%,100%{ transform: scale(1); filter: drop-shadow(0 0 0 rgba(255,176,0,0)); }
-      50%{ transform: scale(1.01); filter: drop-shadow(0 0 18px rgba(255,176,0,.22)); }
-    }
-    #replacementCard.reveal{
-      animation: alertPulse 1.2s ease-in-out 2;
-    }
-    #replacementCard .badgeImportant{
-      display:inline-block;
-      margin-left:10px;
-      padding:3px 10px;
-      border-radius:999px;
-      font-size:12px;
-      border:1px solid rgba(255,176,0,.65);
-      background: rgba(12,4,20,.96);
-      color: var(--text);
-      box-shadow: 0 0 18px rgba(255,176,0,.12);
-    }
-
-
-    /* Modal notification */
-    .modalOverlay{
-      position:fixed;
-      inset:0;
-      background: rgba(0,0,0,.55);
-      backdrop-filter: blur(6px);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      z-index:20000;
-      padding:16px;
-    }
-    .modalCard{
-      width:min(720px, 96vw);
-      border-radius:16px;
-      border:1px solid rgba(255,176,0,.60);
-      background: linear-gradient(180deg, rgba(18,6,28,.95), rgba(12,4,20,.92));
-      box-shadow: 0 0 0 1px rgba(255,176,0,.18), 0 0 34px rgba(255,176,0,.18), 0 30px 80px rgba(0,0,0,.70);
-      padding:14px;
-      position:relative;
-      overflow:hidden;
-    }
-    .modalCard::before{
-      content:"";
-      position:absolute;
-      inset:-2px;
-      background: linear-gradient(90deg, rgba(255,59,212,.0), rgba(255,59,212,.10), rgba(255,176,0,.10), rgba(255,59,212,.0));
-      opacity:.55;
-      transform: translateX(-60%);
-      animation: sheen 8s linear infinite;
-      pointer-events:none;
-    }
-    .modalHead{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-    }
-    .modalTitle{
-      font-weight:800;
-      letter-spacing:.8px;
-      text-transform:uppercase;
-      background: linear-gradient(90deg, rgba(255,59,212,1), rgba(255,176,0,1));
-      -webkit-background-clip:text;
-      background-clip:text;
-      color: transparent;
-    }
-    .modalTag{
-      font-size:12px;
-      padding:3px 10px;
-      border-radius:999px;
-      border:1px solid rgba(255,176,0,.65);
-      background: rgba(12,4,20,.96);
-      box-shadow: 0 0 18px rgba(255,176,0,.12);
-    }
-
-    /* Mobile player picker */
-    .ppList{
-      max-height: 55vh;
-      overflow:auto;
-      border:1px solid rgba(255,59,212,.22);
-      border-radius:12px;
-      background: rgba(7,9,18,.80);
-    }
-    .ppItem{
-      padding:12px 12px;
-      border-bottom:1px solid rgba(255,255,255,.06);
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:12px;
-      cursor:pointer;
-      user-select:none;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .ppItem:last-child{ border-bottom:none; }
-    .ppName{ font-weight:700; }
-    .ppRank{
-      font-size:12px;
-      opacity:.85;
-      border:1px solid rgba(255,176,0,.45);
-      border-radius:999px;
-      padding:2px 8px;
-      white-space:nowrap;
-      background: rgba(12,4,20,.96);
-    }
-
 </style>
 </head>
 <body>
@@ -609,13 +491,13 @@ h1{
   <!-- Buttons moved to bottom -->
   <div class="row">
     <button id="addGameBtn" type="button">Add Game</button>
-    <button id="resetBtn" type="button" type="button" type="button" title="Resets players, games, and target score">Reset</button>
+    <button id="resetBtn" type="button" title="Resets players, games, and target score">Reset</button>
   </div>
 </div>
 
 
 <div class="card" id="replacementCard" style="display:none;">
-  <h3>REPLACEMENT CALCULATOR <span class="badgeImportant">IMPORTANT</span></h3>
+  <h3>REPLACEMENT CALCULATOR</h3>
   <div class="muted" style="margin-top:6px;">
     This section only appears once you’ve logged at least <b>4</b> matches.
   </div>
@@ -637,78 +519,6 @@ h1{
   </div>
 </div>
 
-<!-- Replacement notification modal -->
-<div id="replaceModal" class="modalOverlay" style="display:none;">
-  <div class="modalCard">
-    <div class="modalHead">
-      <div class="modalTitle">REPLACEMENT CALCULATOR</div>
-      <div class="modalTag">UPDATE</div>
-    </div>
-    <div class="spacer8"></div>
-    <div id="replaceModalBody" class="muted">—</div>
-    <div class="spacer10"></div>
-    <div class="row">
-      <button id="replaceModalOk" type="button">OK</button>
-    </div>
-  </div>
-</div>
-
-
-<!-- Game entry modal -->
-<div id="gameModal" class="modalOverlay" style="display:none;">
-  <div class="modalCard">
-    <div class="modalHead">
-      <div class="modalTitle">ADD MATCH</div>
-      <div class="modalTag">LOG IT</div>
-    </div>
-    <div class="spacer10"></div>
-
-    <div class="grid grid-2">
-      <div>
-        <label>Total team kills (combined)</label>
-        <input id="gmKills" type="number" min="0" placeholder="Enter kills" autocomplete="off" autocapitalize="off" spellcheck="false"/>
-      </div>
-      <div>
-        <label>Placement</label>
-        <select id="gmPlacement"></select>
-      </div>
-    </div>
-
-    <div class="spacer10"></div>
-    <div class="row">
-      <button id="gmCancel" type="button">Cancel</button>
-      <button id="gmOk" type="button">OK</button>
-    </div>
-  </div>
-</div>
-
-
-
-<!-- Player picker modal (mobile-friendly) -->
-<div id="playerPickerModal" class="modalOverlay" style="display:none;">
-  <div class="modalCard">
-    <div class="modalHead">
-      <div class="modalTitle">SELECT PLAYER</div>
-      <div class="modalTag">SQUAD</div>
-    </div>
-
-    <div class="spacer10"></div>
-
-    <label>Search</label>
-    <input id="ppSearch" type="search" inputmode="search" enterkeyhint="search"
-           placeholder="Type a name..." autocomplete="off" autocapitalize="off" spellcheck="false"/>
-
-    <div class="spacer10"></div>
-
-    <div id="ppList" class="ppList"></div>
-
-    <div class="spacer10"></div>
-    <div class="row">
-      <button id="ppCancel" type="button">Cancel</button>
-    </div>
-  </div>
-</div>
-
 
 <script>
 const COUNTED_GAMES = 4;
@@ -717,6 +527,14 @@ const MAX_POINTS = 45;
 // Local save (per device)
 const STORAGE_KEY = "tkr_calc_state_all_v1";
 const TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+// Device detection for dropdown behavior (Samsung Internet friendly)
+const IS_MOBILE = (
+  (window.matchMedia && window.matchMedia("(pointer: coarse)").matches) ||
+  ("ontouchstart" in window) ||
+  (navigator.maxTouchPoints > 0)
+);
+let selectingSuggestion = false;
 
 // Placement multipliers (4-player baseline). Trio-quad (3 real players) adds +0.15
 const PLACEMENTS = [
@@ -748,100 +566,6 @@ function unescapeHtml(str){
   t.innerHTML = str;
   return t.value;
 }
-
-let pickerForInputId = null;
-
-function openPlayerPicker(inputId){
-  const overlay = document.getElementById("playerPickerModal");
-  const search = document.getElementById("ppSearch");
-  if(!overlay || !search) return;
-
-  pickerForInputId = inputId;
-  overlay.style.display = "flex";
-  search.value = "";
-  renderPlayerPickerList("");
-
-  try{ search.focus(); }catch(e){}
-}
-
-function closePlayerPicker(){
-  const overlay = document.getElementById("playerPickerModal");
-  if(!overlay) return;
-  overlay.style.display = "none";
-  pickerForInputId = null;
-}
-
-function renderPlayerPickerList(term){
-  const list = document.getElementById("ppList");
-  if(!list) return;
-
-  const t = (term || "").trim().toLowerCase();
-  const rows = players
-    .filter(p => t === "" || p.name.toLowerCase().includes(t))
-    .slice(0, 250);
-
-  list.innerHTML = "";
-
-  rows.forEach(p => {
-    const div = document.createElement("div");
-    div.className = "ppItem";
-    div.innerHTML = `<div class="ppName">${escapeHtml(p.name)}</div><div class="ppRank">${escapeHtml(String(p.rank))}</div>`;
-
-    const pick = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if(!pickerForInputId) return;
-      const input = document.getElementById(pickerForInputId);
-      if(input) input.value = p.name;
-      closePlayerPicker();
-      updateTeam(true);
-      saveState();
-    };
-
-    div.addEventListener("click", pick);
-    div.addEventListener("touchend", pick, {passive:false});
-    list.appendChild(div);
-  });
-}
-
-// Replacement notification trigger
-let replaceNotifyPending = false;
-const IS_MOBILE = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
-
-function showReplaceModal(html){
-  const overlay = document.getElementById("replaceModal");
-  const body = document.getElementById("replaceModalBody");
-  if(!overlay || !body) return;
-  body.innerHTML = html;
-  overlay.style.display = "flex";
-}
-function hideReplaceModal(){
-  const overlay = document.getElementById("replaceModal");
-  if(!overlay) return;
-  overlay.style.display = "none";
-}
-
-function showGameModal(){
-  const overlay = document.getElementById("gameModal");
-  const kills = document.getElementById("gmKills");
-  const place = document.getElementById("gmPlacement");
-  if(!overlay || !kills || !place) return;
-
-  // reset fields
-  kills.value = "";
-  place.value = "1st";
-
-  overlay.style.display = "flex";
-  setTimeout(() => { try{ kills.focus(); }catch(e){} }, 50);
-}
-
-function hideGameModal(){
-  const overlay = document.getElementById("gameModal");
-  if(!overlay) return;
-  overlay.style.display = "none";
-}
-
-
 function parseCSVLine(line){
   const out = [];
   let cur = "";
@@ -1042,17 +766,6 @@ function fillPlacements(){
       s.appendChild(o);
     });
   }
-  // Also populate the Add Match modal placement select
-  const gm = document.getElementById("gmPlacement");
-  if(gm && gm.options.length === 0){
-    PLACEMENTS.forEach(p=>{
-      const o = document.createElement("option");
-      o.value = p.key;
-      o.textContent = p.label;
-      gm.appendChild(o);
-    });
-  }
-
   s.value = current;
   s.addEventListener("change", () => {
     updateTeam(true);
@@ -1071,11 +784,9 @@ function getRankForName(name){
   return (typeof r === "number") ? r : null;
 }
 function showSuggestions(inputId){
-  if(IS_MOBILE) return;
   const input = document.getElementById(inputId);
   const box = document.getElementById("sug-" + inputId);
   if(!input || !box) return;
-  const card = input.closest(".card");
 
   const q = (input.value || "").trim().toLowerCase();
   const names = getAllPlayerNames();
@@ -1107,30 +818,50 @@ function showSuggestions(inputId){
     return `<div class="suggestionItem" data-name="${escapeHtml(name)}" data-idx="${idx}">${escapeHtml(name)} ${meta}</div>`;
   }).join("");
 
-  box.querySelectorAll(".suggestionItem").forEach(item=>{
-    item.addEventListener("mousedown", (e) => { e.preventDefault(); }); // prevent blur before click
-    item.addEventListener("click", () => {
-      const name = item.getAttribute("data-name");
-      input.value = unescapeHtml(name);
-      hideSuggestions(inputId);
-      updateTeam(true);
-      saveState();
-    });
-  });
-
+  // Mobile: lift dropdown above all cards and align near the input
   box.dataset.active = "-1";
   box.style.display = "block";
-  if(card) card.classList.add("dropdownOpen");
+  if(IS_MOBILE){
+    box.classList.add("fixed");
+    const r = input.getBoundingClientRect();
+    const pad = 12;
+    const top = Math.min(window.innerHeight - 12, r.bottom + 8);
+    box.style.top = top + "px";
+    box.style.left = pad + "px";
+    box.style.width = `calc(100vw - ${pad*2}px)`;
+  }else{
+    box.classList.remove("fixed");
+    box.style.top = "";
+    box.style.left = "";
+    box.style.width = "";
+  }
+
+  // Event delegation: reliable on Samsung Internet (fires before blur)
+  const pick = (target) => {
+    const item = target && target.closest ? target.closest(".suggestionItem") : null;
+    if(!item) return;
+    selectingSuggestion = true;
+    const name = item.getAttribute("data-name");
+    input.value = unescapeHtml(name);
+    hideSuggestions(inputId);
+    updateTeam(true);
+    saveState();
+    setTimeout(()=> selectingSuggestion = false, 0);
+  };
+  box.onpointerdown = (e) => { e.preventDefault(); e.stopPropagation(); pick(e.target); };
+  box.ontouchstart = (e) => { e.preventDefault(); e.stopPropagation(); pick(e.target); };
+
 }
 function hideSuggestions(inputId){
   const box = document.getElementById("sug-" + inputId);
-  const input = document.getElementById(inputId);
-  const card = input ? input.closest(".card") : null;
-  if(!box) { if(card) card.classList.remove("dropdownOpen"); return; }
+  if(!box) return;
   box.style.display = "none";
   box.innerHTML = "";
   box.dataset.active = "-1";
-  if(card) card.classList.remove("dropdownOpen");
+  box.classList.remove("fixed");
+  box.style.top = "";
+  box.style.left = "";
+  box.style.width = "";
 }
 function handleSuggestKeys(e, inputId){
   const box = document.getElementById("sug-" + inputId);
@@ -1175,12 +906,8 @@ function handleSuggestKeys(e, inputId){
 
 // ===== UI & interactions =====
 function hookInputs(){
-  const okBtn = document.getElementById("replaceModalOk");
-  if(okBtn) okBtn.addEventListener("click", () => hideReplaceModal());
-  const gmCancel = document.getElementById("gmCancel");
-  if(gmCancel) gmCancel.addEventListener("click", () => hideGameModal());
-  const gmOk = document.getElementById("gmOk");
-  if(gmOk) gmOk.addEventListener("click", () => submitGameFromModal());
+  window.addEventListener('scroll', () => { if(IS_MOBILE){ ['p1','p2','p3','p4'].forEach(hideSuggestions); } }, {passive:true});
+  window.addEventListener('resize', () => { if(IS_MOBILE){ ['p1','p2','p3','p4'].forEach(hideSuggestions); } });
 
   // Player inputs
   ["p1","p2","p3","p4"].forEach(id=>{
@@ -1193,7 +920,8 @@ function hookInputs(){
     el.addEventListener("keydown", (e) => handleSuggestKeys(e, id));
     el.addEventListener("change", () => updateTeam(true));
     el.addEventListener("blur", () => {
-      setTimeout(() => hideSuggestions(id), 120);
+      // On mobile, tapping a suggestion blurs first — don’t hide immediately.
+      setTimeout(() => { if(!selectingSuggestion) hideSuggestions(id); }, 350);
       updateTeam(true);
     });
   });
@@ -1207,7 +935,7 @@ function hookInputs(){
     saveState();
   });
 
-  document.getElementById("addGameBtn").addEventListener("click", () => showGameModal());
+  document.getElementById("addGameBtn").addEventListener("click", () => addGame());
 
   document.getElementById("resetBtn").addEventListener("click", () => {
     // Reset players + games + target score. Keep static rules/multipliers.
@@ -1302,37 +1030,18 @@ function updateReplacementHelper(){
   }
   card.style.display = "block";
 
-  // One-time reveal animation when the section becomes available
-  if(!card.dataset.revealed){
-    card.classList.add("reveal");
-    card.dataset.revealed = "1";
-    setTimeout(()=>card.classList.remove("reveal"), 2600);
-  }
-
   const rankTxt = document.getElementById("teamRank").textContent;
   const realPlayers = parseInt(document.getElementById("realPlayers").textContent || "0", 10);
   const targetTotal = parseFloat(document.getElementById("targetTotal").value || String(COUNTED_GAMES * MAX_POINTS));
 
-  const maybeNotify = () => {
-    if(!replaceNotifyPending) return;
-    // Build modal from the same content shown in the section
-    const modalHtml =
-      `<div>${summaryEl.innerHTML}</div>` +
-      `<div style="margin-top:12px;"><b>Plan</b><br>${planEl.innerHTML}</div>`;
-    showReplaceModal(modalHtml);
-    replaceNotifyPending = false;
-  };
-
   if(rankTxt === "–"){
     summaryEl.innerHTML = `<b>Select players</b> to calculate replacement requirements.`;
-    planEl.innerHTML = `—`;
-    maybeNotify();
+    planEl.textContent = "—";
     return;
   }
   if(!isFinite(targetTotal) || targetTotal < 0){
     summaryEl.innerHTML = `<b>Enter a valid target total</b>.`;
-    planEl.innerHTML = `—`;
-    maybeNotify();
+    planEl.textContent = "—";
     return;
   }
 
@@ -1344,15 +1053,22 @@ function updateReplacementHelper(){
   const best4 = sorted.slice(0, 4);
   const best4Total = best4.reduce((s,g)=>s+g.points, 0);
 
-  // How many games likely need replacing (rough guidance)
+  // How many games need replacing? (how many of the best4 must improve to hit target)
   const gap = targetTotal - best4Total;
   let gamesToReplace = 0;
-  if(gap <= 0) gamesToReplace = 0;
-  else if(gap <= 45) gamesToReplace = 1;
-  else if(gap <= 90) gamesToReplace = 2;
-  else if(gap <= 135) gamesToReplace = 3;
-  else gamesToReplace = 4;
+  if(gap <= 0){
+    gamesToReplace = 0;
+  }else if(gap <= 45){
+    gamesToReplace = 1;
+  }else if(gap <= 90){
+    gamesToReplace = 2;
+  }else if(gap <= 135){
+    gamesToReplace = 3;
+  }else{
+    gamesToReplace = 4;
+  }
 
+  // Build a readable summary
   const fourth = best4[3];
   const fourthTxt = fourth
     ? `${fourth.points.toFixed(2)} pts • ${fourth.killsInt ?? 0} kills • ${PLACEMENTS.find(p=>p.key===fourth.placement)?.label || fourth.placement}`
@@ -1360,20 +1076,21 @@ function updateReplacementHelper(){
 
   summaryEl.innerHTML =
     `Target: <b>${targetTotal.toFixed(2)}</b><br>` +
-    `Best 4 total: <b>${best4Total.toFixed(2)}</b><br>` +
+    `Current best 4 total: <b>${best4Total.toFixed(2)}</b><br>` +
     `4th best game: <b>${fourthTxt}</b><br>` +
     (gamesToReplace === 0
       ? `<span style="color:var(--text);"><b>✅ Target met.</b></span>`
       : `<b>${gamesToReplace}</b> game(s) likely need replacing to reach target.`);
 
+  // Build the plan
   if(gamesToReplace === 0){
-    planEl.innerHTML =
-      `You’re on track. If you want to improve, replace your current 4th best game (<b>${fourth ? fourth.points.toFixed(2) : "—"} pts</b>) with a higher score.`;
-    maybeNotify();
+    planEl.innerHTML = `You’re good. If you want to improve, aim to replace your current 4th best game (<b>${fourth.points.toFixed(2)} pts</b>) with a higher score.`;
     return;
   }
 
-  // Try best 3 + 1 replacement game
+  // Strategy:
+  // If 1 game can close it: use best3 + needed
+  // Else: best2 + 2 games split suggestions
   const best3 = sorted.slice(0, 3);
   const best3Total = best3.reduce((s,g)=>s+g.points, 0);
   const need1 = targetTotal - best3Total;
@@ -1382,10 +1099,9 @@ function updateReplacementHelper(){
     const kills = minKillsForTarget(need1, placementKey, teamRank, realPlayers);
     const improve = Math.max(0, need1 - (fourth ? fourth.points : 0));
     planEl.innerHTML =
-      `Your 4th counted game needs about <b>${need1.toFixed(2)} pts</b>.<br>` +
+      `To hit the target, your <b>4th counted game</b> needs about <b>${need1.toFixed(2)} pts</b>.<br>` +
       `That’s roughly <b>${kills ?? "—"}</b> kills if you place <b>${placementLabel}</b>.<br>` +
       (fourth ? `That’s <b>+${improve.toFixed(2)} pts</b> better than your current 4th best.` : ``);
-    maybeNotify();
     return;
   }
 
@@ -1396,9 +1112,8 @@ function updateReplacementHelper(){
 
   if(need2 > 2 * MAX_POINTS){
     planEl.innerHTML =
-      `Even replacing 2 games, you’d need <b>${need2.toFixed(2)}</b> points across two games, but max is <b>90</b> (2×45).<br>` +
-      `Lower the target or plan to improve more than 2 games.`;
-    maybeNotify();
+      `Even replacing <b>2 games</b>, you’d need <b>${need2.toFixed(2)}</b> points across two games, but max is <b>90</b> (2×45).<br>` +
+      `Try lowering the target or improving more than two games.`;
     return;
   }
 
@@ -1411,12 +1126,10 @@ function updateReplacementHelper(){
   const kA2 = minKillsForTarget(secondA, placementKey, teamRank, realPlayers);
 
   planEl.innerHTML =
-    `One game won’t do it — you likely need to replace <b>2 games</b>.<br>` +
+    `One game isn’t enough. You likely need to replace <b>2 games</b>.<br>` +
     `Total points needed across 2 games: <b>${need2.toFixed(2)}</b> (max 90).<br><br>` +
     `<b>Option A:</b> even split → <b>${even.toFixed(2)} pts</b> each ≈ <b>${evenKills ?? "—"}</b> kills/game as <b>${placementLabel}</b>.<br>` +
     `<b>Option B:</b> one big + cleanup → <b>${firstA.toFixed(2)} pts</b> then <b>${secondA.toFixed(2)} pts</b> ≈ <b>${kA1 ?? "—"}</b> kills then <b>${kA2 ?? "—"}</b> kills.`;
-
-  maybeNotify();
 }
 
 function updateTeam(forceSort){
@@ -1441,41 +1154,6 @@ function updateTeam(forceSort){
   recalc(forceSort);
   updateReplacementHelper();
   saveState();
-}
-
-function submitGameFromModal(){
-  const killsEl = document.getElementById("gmKills");
-  const placeEl = document.getElementById("gmPlacement");
-  if(!killsEl || !placeEl) return;
-
-  const raw = String(killsEl.value ?? "").trim();
-  const kills = raw === "" ? 0 : Math.max(0, parseInt(raw, 10) || 0);
-  const placement = placeEl.value || "1st";
-
-  hideGameModal();
-
-  const id = nextGameId++;
-  const g = { id, killsStr: raw, killsInt: kills, placement, points: 0 };
-  games.push(g);
-
-  const node = createGameNode(g);
-  gameNodes.set(id, node);
-  document.getElementById("games").appendChild(node);
-
-  const kIn = node.querySelector(`#kills-${id}`);
-  if(kIn) kIn.value = raw;
-  const pIn = node.querySelector(`#place-${id}`);
-  if(pIn) pIn.value = placement;
-
-  recalc(true);
-
-  // Show replacement popup only AFTER a real submission (kills > 0) and once 4+ games exist
-  replaceNotifyPending = (games.length >= 4 && kills > 0);
-
-  updateReplacementHelper();
-  saveState();
-
-  try{ node.scrollIntoView({behavior:"smooth", block:"start"}); }catch(e){}
 }
 
 function addGame(){
@@ -1537,7 +1215,6 @@ function createGameNode(g){
     if(node) node.remove();
     gameNodes.delete(g.id);
     recalc(true);
-    if((g.killsInt ?? 0) > 0) /* notify via Add Match modal */
     updateReplacementHelper();
     saveState();
   });
@@ -1559,13 +1236,12 @@ function createGameNode(g){
     saveState();
   });
 
-  killsInput.addEventListener("change", () => { recalc(true); if((g.killsInt ?? 0) > 0) /* notify via Add Match modal */ updateReplacementHelper(); saveState(); });
-  killsInput.addEventListener("blur", () => { recalc(true); if((g.killsInt ?? 0) > 0) /* notify via Add Match modal */ updateReplacementHelper(); saveState(); });
+  killsInput.addEventListener("change", () => { recalc(true); updateReplacementHelper(); saveState(); });
+  killsInput.addEventListener("blur", () => { recalc(true); updateReplacementHelper(); saveState(); });
 
   placeSel.addEventListener("change", (e) => {
     g.placement = e.target.value;
     recalc(true);
-    if((g.killsInt ?? 0) > 0) /* notify via Add Match modal */
     updateReplacementHelper();
     saveState();
   });
