@@ -476,8 +476,8 @@ h1{
   <div class="spacer10"></div>
   <!-- Buttons moved to bottom -->
   <div class="row">
-    <button id="addGameBtn">Add Game</button>
-    <button id="resetBtn" title="Resets players, games, and target score">Reset</button>
+    <button id="addGameBtn" type="button">Add Game</button>
+    <button id="resetBtn" type="button" title="Resets players, games, and target score">Reset</button>
   </div>
 </div>
 
@@ -1116,6 +1116,8 @@ function addGame(){
   document.getElementById("games").appendChild(node);
 
   recalc(true);
+  // Jump to the new game row
+  try{ node.scrollIntoView({behavior:"smooth", block:"start"}); }catch(e){}
   updateReplacementHelper();
   saveState();
 }
