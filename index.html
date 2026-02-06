@@ -367,6 +367,7 @@ h1{
 </style>
 </head>
 <body>
+<form autocomplete="off">
 
 <h1>THE KREW • TKR SCORING</h1>
 <div class="muted" style="margin:-6px 0 14px 0;"></div>
@@ -374,27 +375,27 @@ h1{
 <div class="card">
   <h3>SQUAD BUILDER</h3>
 
-  <datalist id="playersList"></datalist>
+  
 
   <div class="grid grid-4">
     <div class="playerWrap">
       <label>Player 1</label>
-      <input class="playerInput" id="p1" list="playersList" placeholder="Type a name (or NONE)" autocomplete="off"/>
+      <input class="playerInput" id="p1" placeholder="Type a name (or NONE)" autocomplete="off" autocapitalize="off" spellcheck="false"/>
       <div class="suggestions" id="sug-p1"></div>
     </div>
     <div class="playerWrap">
       <label>Player 2</label>
-      <input class="playerInput" id="p2" list="playersList" placeholder="Type a name (or NONE)" autocomplete="off"/>
+      <input class="playerInput" id="p2" placeholder="Type a name (or NONE)" autocomplete="off" autocapitalize="off" spellcheck="false"/>
       <div class="suggestions" id="sug-p2"></div>
     </div>
     <div class="playerWrap">
       <label>Player 3</label>
-      <input class="playerInput" id="p3" list="playersList" placeholder="Type a name (or NONE)" autocomplete="off"/>
+      <input class="playerInput" id="p3" placeholder="Type a name (or NONE)" autocomplete="off" autocapitalize="off" spellcheck="false"/>
       <div class="suggestions" id="sug-p3"></div>
     </div>
     <div class="playerWrap">
       <label>Player 4</label>
-      <input class="playerInput" id="p4" list="playersList" placeholder="Type a name (or NONE)" autocomplete="off"/>
+      <input class="playerInput" id="p4" placeholder="Type a name (or NONE)" autocomplete="off" autocapitalize="off" spellcheck="false"/>
       <div class="suggestions" id="sug-p4"></div>
     </div>
   </div>
@@ -1294,5 +1295,6 @@ loadCSV().catch(e=>{
 });
 </script>
 
+</form>
 </body>
 </html>
