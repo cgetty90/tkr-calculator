@@ -364,6 +364,8 @@ h1{
   text-shadow:none;
 }
 
+
+    /* (datalist doesn't render, but kept for JS compatibility) */
 </style>
 </head>
 <body>
@@ -374,6 +376,8 @@ h1{
 
 <div class="card">
   <h3>SQUAD BUILDER</h3>
+
+  <datalist id="playersList"></datalist>
 
   
 
@@ -713,9 +717,9 @@ async function loadCSV(){
 
 function buildDatalist(){
   const dl = document.getElementById("playersList");
+  if(!dl) return;
   dl.innerHTML = "";
-
-  const none = document.createElement("option");
+const none = document.createElement("option");
   none.value = "NONE";
   none.label = "NONE (0)";
   dl.appendChild(none);
