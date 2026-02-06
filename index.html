@@ -691,6 +691,7 @@ function unescapeHtml(str){
 }
 // Replacement notification trigger
 let replaceNotifyPending = false;
+let selectingSuggestion = false;
 
 function showReplaceModal(html){
   const overlay = document.getElementById("replaceModal");
@@ -991,14 +992,27 @@ function showSuggestions(inputId){
   }).join("");
 
   box.querySelectorAll(".suggestionItem").forEach(item=>{
-    item.addEventListener("mousedown", (e) => { e.preventDefault(); }); // prevent blur before click
-    item.addEventListener("click", () => {
+    // Mobile-friendly selection: handle before the input blurs
+    const pick = () => {
       const name = item.getAttribute("data-name");
       input.value = unescapeHtml(name);
       hideSuggestions(inputId);
       updateTeam(true);
       saveState();
+    };
+    item.addEventListener("pointerdown", (e) => {
+      selectingSuggestion = true;
+      e.preventDefault();
+      pick();
+      setTimeout(()=> selectingSuggestion = false, 0);
     });
+    item.addEventListener("touchstart", (e) => {
+      selectingSuggestion = true;
+      e.preventDefault();
+      pick();
+      setTimeout(()=> selectingSuggestion = false, 0);
+    }, {passive:false});
+  });
   });
 
   box.dataset.active = "-1";
@@ -1076,7 +1090,8 @@ function hookInputs(){
     el.addEventListener("keydown", (e) => handleSuggestKeys(e, id));
     el.addEventListener("change", () => updateTeam(true));
     el.addEventListener("blur", () => {
-      setTimeout(() => hideSuggestions(id), 120);
+      // On mobile, tapping a suggestion causes blur first. Don’t close if we are selecting.
+      setTimeout(() => { if(!selectingSuggestion) hideSuggestions(id); }, 250);
       updateTeam(true);
     });
   });
