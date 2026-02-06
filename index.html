@@ -366,6 +366,13 @@ h1{
 
 
     /* (datalist doesn't render, but kept for JS compatibility) */
+
+    /* Ensure autocomplete dropdown can float above following cards */
+    .card{ z-index: 0; }
+    .card.dropdownOpen{ z-index: 50; }
+    .playerWrap{ z-index: 1; }
+    .suggestions{ z-index: 10000; }
+
 </style>
 </head>
 <body>
@@ -765,6 +772,7 @@ function showSuggestions(inputId){
   const input = document.getElementById(inputId);
   const box = document.getElementById("sug-" + inputId);
   if(!input || !box) return;
+  const card = input.closest(".card");
 
   const q = (input.value || "").trim().toLowerCase();
   const names = getAllPlayerNames();
@@ -809,13 +817,17 @@ function showSuggestions(inputId){
 
   box.dataset.active = "-1";
   box.style.display = "block";
+  if(card) card.classList.add("dropdownOpen");
 }
 function hideSuggestions(inputId){
   const box = document.getElementById("sug-" + inputId);
-  if(!box) return;
+  const input = document.getElementById(inputId);
+  const card = input ? input.closest(".card") : null;
+  if(!box) { if(card) card.classList.remove("dropdownOpen"); return; }
   box.style.display = "none";
   box.innerHTML = "";
   box.dataset.active = "-1";
+  if(card) card.classList.remove("dropdownOpen");
 }
 function handleSuggestKeys(e, inputId){
   const box = document.getElementById("sug-" + inputId);
