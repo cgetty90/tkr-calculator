@@ -1319,7 +1319,7 @@ function createGameNode(g){
     if(node) node.remove();
     gameNodes.delete(g.id);
     recalc(true);
-    replaceNotifyPending = true;
+    if((g.killsInt ?? 0) > 0) replaceNotifyPending = true;
     updateReplacementHelper();
     saveState();
   });
@@ -1341,13 +1341,13 @@ function createGameNode(g){
     saveState();
   });
 
-  killsInput.addEventListener("change", () => { recalc(true); replaceNotifyPending = true; updateReplacementHelper(); saveState(); });
-  killsInput.addEventListener("blur", () => { recalc(true); replaceNotifyPending = true; updateReplacementHelper(); saveState(); });
+  killsInput.addEventListener("change", () => { recalc(true); if((g.killsInt ?? 0) > 0) replaceNotifyPending = true; updateReplacementHelper(); saveState(); });
+  killsInput.addEventListener("blur", () => { recalc(true); if((g.killsInt ?? 0) > 0) replaceNotifyPending = true; updateReplacementHelper(); saveState(); });
 
   placeSel.addEventListener("change", (e) => {
     g.placement = e.target.value;
     recalc(true);
-    replaceNotifyPending = true;
+    if((g.killsInt ?? 0) > 0) replaceNotifyPending = true;
     updateReplacementHelper();
     saveState();
   });
