@@ -490,7 +490,6 @@ h1{
   <div class="spacer10"></div>
   <!-- Buttons moved to bottom -->
   <div class="row">
-    <button id="addGameBtn" type="button">Add Game</button>
     <button id="resetBtn" type="button" title="Resets players, games, and target score">Reset</button>
   </div>
 </div>
@@ -1292,9 +1291,24 @@ function recalc(updateTargets){
   }
 }
 
-loadCSV().catch(e=>{
-  alert(e.message);
-});
+async function boot(){
+  try{
+    await loadCSV();
+  }catch(e){
+    alert(e.message || String(e));
+  }
+  loadState();
+  // Ensure fixed 7 maps layout
+  if(!Array.isArray(games) || games.length !== 7){
+    initGamesFixed();
+  }
+  hookInputs();
+  updateTeam(true);
+  renderGames();
+  recalc(true);
+}
+
+window.addEventListener("DOMContentLoaded", boot);
 </script>
 
 </form>
