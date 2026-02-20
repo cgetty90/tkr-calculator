@@ -1125,13 +1125,13 @@ function updateReplacementHelper(){
 
 function updateTeam(forceSort){
   const { teamRank } = computeTeam();
-  document.getElementById("realPlayers").textContent = String(realPlayers);
+  { const _el = document.getElementById("realPlayers"); if(_el) _el.textContent = String(realPlayers); }
 
   if(teamRank <= 0){
     document.getElementById("teamRank").textContent = "–";
-    document.getElementById("divisor").textContent = "–";
-    document.getElementById("killsNeeded45").textContent = "Select players to calculate";
-    document.getElementById("killsNeededTarget").textContent = "—";
+    { const _el = document.getElementById("divisor"); if(_el) _el.textContent = "–"; }
+    { const _el = document.getElementById("killsNeeded45"); if(_el) _el.textContent = "Select players to calculate"; }
+    { const _el = document.getElementById("killsNeededTarget"); if(_el) _el.textContent = "—"; }
     updateReplacementHelper();
     recalc(forceSort);
     saveState();
@@ -1139,7 +1139,7 @@ function updateTeam(forceSort){
   }
 
   document.getElementById("teamRank").textContent = teamRank.toFixed(2);
-  document.getElementById("divisor").textContent = (teamRank*0.1).toFixed(2);
+  { const _el = document.getElementById("divisor"); if(_el) _el.textContent = (teamRank*0.1).toFixed(2); }
 
   calcKillsNeededBlocks(teamRank);
   recalc(forceSort);
