@@ -422,8 +422,8 @@ h1{
 
   <div style="margin-top:10px">
     <span class="pill">Squad Rank: <b id="teamRank">–</b></span>
-    <span class="pill">Active Players: <b id="realPlayers">0</b></span>
-    <span class="pill">Rank Divisor (÷10): <b id="divisor">–</b></span>
+    <span id="realPlayers" style="display:none">0</span>
+    <span id="divisor" style="display:none">–</span>
   </div>
 
   </div>
@@ -436,28 +436,26 @@ h1{
       <!-- Static fallback options (JS also fills these) -->
       <select id="assumedPlacement">
         <option value="1st">1st</option>
-        <option value="2nd-3rd">2nd–3rd</option>
-        <option value="4th-5th">4th–5th</option>
-        <option value="6th-10th">6th–10th</option>
-        <option value="11th+">11th+</option>
+        <option value="2nd">2nd</option>
+        <option value="3rd">3rd</option>
+        <option value="4th">4th</option>
+        <option value="5th">5th</option>
+        <option value="6th+">6th+</option>
       </select>
 
-      <div class="spacer10"></div>
-      <label>Milestones (+1 each)</label>
-      <input id="milestonesLabel" disabled value="60,70,75,80,85,95,100"/>
+      
     </div>
 
     <div>
-      <label>Target total score (7 maps)</label>
+      <label>Target total score</label>
       <input id="targetTotal" type="number" min="0" step="0.01" value="200"/>
       <div class="muted" style="margin-top:6px;">
-        Played maps: <b>7</b>; counted: <b>best 6</b>. No max points per map.
+        Played maps: <b>7</b>; counted: <b>best 6</b>.
       </div>
     </div>
   </div>
 
-  <div id="killsNeeded45" style="margin-bottom:10px;">Select players to calculate</div>
-  <div id="killsNeededTarget">—</div>
+  <div id="killsNeeded45" style="margin-top:6px;" class="muted">Select your squad to see kill targets.</div>
 </div>
 
 <div class="card">
@@ -466,28 +464,18 @@ h1{
   <div id="games" style="margin-top:10px;"></div>
 
   <div style="margin-top:10px">
-    <span class="pill">Total (7 maps): <b id="best4Total">0.00</b></span>
-    <span class="pill">Remaining Possible: <b id="remainingPossible">180.00</b></span>
-    <span class="pill">Matches Logged: <b id="gamesEntered">0</b></span>
+    <span class="pill">Total (best 6 of 7): <b id="best4Total">0</b></span>
+    <span class="pill">Maps logged: <b id="gamesEntered">0</b></span>
+    <span id="remainingPossible" style="display:none">0</span>
   </div>
 
-  <div class="meterWrap" id="meterWrap">
-    <div class="meterTop">
-      <div class="meterMeta"><b>Target Progress</b> — 7 maps vs target</div>
-      <div class="meterMeta">Total: <b id="meterBest4">0.00</b> / Target: <b id="meterTarget">180.00</b></div>
+  <div class="meterMeta">Total: <b id="meterBest4">0.00</b> / Target: <b id="meterTarget">180.00</b></div>
     </div>
     <div class="spacer8"></div>
     <div class="meterBar"><div class="meterFill" id="meterFill"></div></div>
   </div>
 
   <div class="spacer8"></div>
-
-  <div class="muted" style="margin-top:8px;">
-    Remaining Possible = (4 × 45) − (best-4 total). Games are sorted by points (highest first).
-  </div>
-  <div class="muted" style="margin-top:6px;">
-    Saved on this device for <b>24 hours</b>.
-  </div>
 
   <div class="spacer10"></div>
   <!-- Buttons moved to bottom -->
@@ -936,7 +924,7 @@ function hookInputs(){
   document.getElementById("targetTotal").addEventListener("input", () => {
     const rankTxt = document.getElementById("teamRank").textContent;
     if(rankTxt !== "–"){
-      calcKillsNeededBlocks(parseFloat(rankTxt), parseInt(document.getElementById("realPlayers").textContent || "0", 10));
+      calcKillsNeededBlocks(parseFloat(rankTxt));
       updateReplacementHelper();
     }
     saveState();
@@ -994,48 +982,50 @@ function computeTeam(){
 }
 
 function calcKillsNeededBlocks(teamRank){
+  const out = document.getElementById("killsNeeded45");
+  if(!out) return;
+
   const placementKey = document.getElementById("assumedPlacement").value || "1st";
   const placementLabel = PLACEMENTS.find(p=>p.key===placementKey)?.label || placementKey;
 
   const normal = games.filter(g => !g.isReset).slice(0, TOTAL_MAPS);
   const reset = games.find(g => g.isReset) || null;
 
-  const baseTotal = normal.reduce((s,g)=>s+g.points, 0);
+  // Apply reset replacement into 7-map set, then count best 6
+  let mapsForCounting = [...normal];
   const lowest = normal.length ? normal.reduce((m,g)=>Math.min(m,g.points), Infinity) : 0;
-
-  // Effective total if reset exists and improves the lowest of the 7 maps
-  let effectiveTotal = baseTotal;
   if(normal.length === TOTAL_MAPS && reset && reset.points > lowest){
-    effectiveTotal = baseTotal - lowest + reset.points;
+    let li=-1, lv=Infinity;
+    mapsForCounting.forEach((g,i)=>{ if(g.points < lv){ lv=g.points; li=i; } });
+    if(li>=0) mapsForCounting[li] = reset;
   }
+  const currentTotal = [...mapsForCounting].sort((a,b)=>b.points-a.points).slice(0, BEST_COUNTED).reduce((s,g)=>s+g.points,0);
 
   const targetTotal = parseFloat(document.getElementById("targetTotal").value || "0");
   if(!isFinite(targetTotal) || targetTotal < 0){
-    document.getElementById("killsNeeded45").innerHTML = `<span class="muted">Enter a valid target total.</span>`;
-    document.getElementById("killsNeededTarget").innerHTML = `—`;
+    out.innerHTML = "Enter a valid target.";
     return;
   }
 
   const remaining = Math.max(0, TOTAL_MAPS - normal.length);
-  const neededTotal = Math.max(0, targetTotal - effectiveTotal);
-  const perMapNeed = (remaining > 0) ? Math.ceil(neededTotal / remaining) : 0;
+  const needed = Math.max(0, targetTotal - currentTotal);
 
-  // Summary
-  document.getElementById("killsNeeded45").innerHTML =
-    `Current total: <b>${effectiveTotal.toFixed(0)}</b> / Target: <b>${targetTotal.toFixed(0)}</b>` +
-    `<div class="muted" style="margin-top:6px;">Scoring: (Kills + Placement Pts + Milestone Pts) ÷ (TeamRank/10), rounded down. Milestones are +5 each at 50/60/70/70/90/100.</div>`;
-
-  if(remaining === 0){
-    document.getElementById("killsNeededTarget").innerHTML =
-      (neededTotal <= 0)
-        ? `✅ Target met with your 7 maps.`
-        : `All 7 maps logged. You’re short by <b>${neededTotal.toFixed(0)}</b> points — use the <b>Reset Game</b> to replace your lowest map.`;
+  if(needed <= 0){
+    out.innerHTML = `✅ On target. Total: <b>${currentTotal}</b> / <b>${targetTotal.toFixed(0)}</b>`;
     return;
   }
 
-  const kNeeded = minKillsForTarget(perMapNeed, placementKey, teamRank);
-  document.getElementById("killsNeededTarget").innerHTML =
-    `<b>${kNeeded ?? "—"}</b> kills/map to average <b>${perMapNeed.toFixed(0)}</b> points/map over the remaining <b>${remaining}</b> map(s), assuming <b>${placementLabel}</b>.`;
+  if(remaining === 0){
+    out.innerHTML = `All 7 maps logged. Short by <b>${needed.toFixed(0)}</b> pts — use a reset game to replace a low map.`;
+    return;
+  }
+
+  const perMapNeed = Math.ceil(needed / remaining);
+  const killsNeed = minKillsForTarget(perMapNeed, placementKey, teamRank);
+
+  out.innerHTML =
+    `Need <b>${needed.toFixed(0)}</b> pts over <b>${remaining}</b> map(s). ` +
+    `That’s ~<b>${perMapNeed}</b> pts/map ⇒ <b>${killsNeed ?? "—"}</b> kills if you place <b>${placementLabel}</b>.`;
 }
 
 function updateReplacementHelper(){
@@ -1058,7 +1048,7 @@ function updateReplacementHelper(){
   const normal = games.filter(g => !g.isReset).slice(0, TOTAL_MAPS);
   const reset = games.find(g => g.isReset) || null;
 
-  if(normal.length === 0 && !reset){
+  if(normal.length < BEST_COUNTED){
     card.style.display = "none";
     return;
   }
@@ -1080,7 +1070,7 @@ function updateReplacementHelper(){
   }
 
   summaryEl.innerHTML =
-    `<b>RESET GAME</b><br>` +
+    `<b>RESET GAME</b><div class="muted" style="margin-top:4px;">(shows after 6 maps logged)</div><br>` +
     `Logged maps: <b>${normal.length}</b>/7` +
     (reset ? ` • Reset logged: <b>Yes</b>` : ` • Reset logged: <b>No</b>`) +
     `<br>Lowest map (so far): <b>${(lowest===Infinity?0:lowest).toFixed(0)}</b> pts`;
