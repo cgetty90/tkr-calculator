@@ -544,7 +544,7 @@ function initGamesFixed(){
 }
 
 // DOM cache for the fixed 7-map editor
-let gameNodes = window.__tkr_gameNodes || (window.__tkr_gameNodes = new Map());
+var gameNodes = window.__tkr_gameNodes || (window.__tkr_gameNodes = new Map());
 
 function renderGames(){
   const host = document.getElementById("games");
@@ -559,7 +559,7 @@ function renderGames(){
   });
 }
 
-let gameNodes = new Map(); // id -> element
+var gameNodes = new Map(); // id -> element
 let nextGameId = 1;
 
 // ===== small helpers =====
