@@ -410,22 +410,22 @@ h1{
   <div class="grid grid-4">
     <div class="playerWrap">
       <label>Player 1</label>
-      <input class="playerInput" id="p1" placeholder="Type a name (or NONE)" autocomplete="off" autocapitalize="off" spellcheck="false"/>
+      <input class="playerInput" id="p1" placeholder="Type a name (or NONE)" autocomplete="off" autocapitalize="off" spellcheck="false"/ list="playersList">
       <div class="suggestions" id="sug-p1"></div>
     </div>
     <div class="playerWrap">
       <label>Player 2</label>
-      <input class="playerInput" id="p2" placeholder="Type a name (or NONE)" autocomplete="off" autocapitalize="off" spellcheck="false"/>
+      <input class="playerInput" id="p2" placeholder="Type a name (or NONE)" autocomplete="off" autocapitalize="off" spellcheck="false"/ list="playersList">
       <div class="suggestions" id="sug-p2"></div>
     </div>
     <div class="playerWrap">
       <label>Player 3</label>
-      <input class="playerInput" id="p3" placeholder="Type a name (or NONE)" autocomplete="off" autocapitalize="off" spellcheck="false"/>
+      <input class="playerInput" id="p3" placeholder="Type a name (or NONE)" autocomplete="off" autocapitalize="off" spellcheck="false"/ list="playersList">
       <div class="suggestions" id="sug-p3"></div>
     </div>
     <div class="playerWrap">
       <label>Player 4</label>
-      <input class="playerInput" id="p4" placeholder="Type a name (or NONE)" autocomplete="off" autocapitalize="off" spellcheck="false"/>
+      <input class="playerInput" id="p4" placeholder="Type a name (or NONE)" autocomplete="off" autocapitalize="off" spellcheck="false"/ list="playersList">
       <div class="suggestions" id="sug-p4"></div>
     </div>
   </div>
@@ -709,9 +709,12 @@ function minKillsForTarget(targetPoints, placementKey, teamRank){
 // ===== CSV loading =====
 async function loadCSV(){
   const url = "rankings.csv?ts=" + Date.now();
-  const text = await fetch(url, { cache: "no-store" }).then(r=>r.text());
+  const r = await fetch(url, { cache: "no-store" });
+  if(!r.ok) throw new Error("Failed to load rankings.csv (" + r.status + ")");
+  const text = await r.text();
 
-  const lines = text.replace(/\r/g,"").split("\n").filter(l => l.trim().length);
+  const lines = text.replace(//g,"").split("
+").filter(l => l.trim().length);
   if(!lines.length) throw new Error("rankings.csv is empty");
 
   const headers = parseCSVLine(lines.shift()).map(h => h.toLowerCase());
@@ -727,42 +730,13 @@ async function loadCSV(){
     const name = String(cols[nameIdx] ?? "").trim();
     const rank = parseFloat(String(cols[rankIdx] ?? "0").trim());
     if(!name) return;
-    const r = isFinite(rank) ? rank : 0;
-    rankings.push({ name, rank: r });
-    rankByNameLower.set(name.toLowerCase(), r);
+    const rnk = isFinite(rank) ? rank : 0;
+    rankings.push({ name, rank: rnk });
+    rankByNameLower.set(name.toLowerCase(), rnk);
   });
 
   rankings.sort((a,b)=>a.name.localeCompare(b.name, undefined, { sensitivity:"base" }));
-
   buildDatalist();
-  fillPlacements();      // reinforces options and keeps selection
-  hookInputs();
-  const msEl = document.getElementById("milestonesLabel");
-  if(msEl) msEl.value = MILESTONES.join(", ");
-
-  loadState();
-  // Ensure we always have the fixed 7-map layout (6 main + reset)
-  if(!Array.isArray(games) || games.length !== 7){
-    initGamesFixed();
-  }else{
-    // normalize legacy shapes
-    games = games.map((g,i)=>({
-      id: (g && typeof g.id==='number') ? g.id : (i+1),
-      label: (g && g.label) ? g.label : (i<6 ? `Map ${i+1}` : 'Reset (Map 7)'),
-      killsStr: (g && typeof g.killsStr==='string') ? g.killsStr : '',
-      killsInt: (g && typeof g.killsInt==='number') ? g.killsInt : 0,
-      placement: (g && typeof g.placement==='string') ? g.placement : '',
-      points: (g && typeof g.points==='number') ? g.points : 0,
-      isReset: (i===6) || !!(g && g.isReset)
-    }));
-    // force last to be reset
-    games[6].isReset = true;
-    games[6].label = 'Reset (Map 7)';
-    for(let i=0;i<6;i++){ games[i].isReset = false; games[i].label = `Map ${i+1}`; }
-  }
-  updateTeam(true);
-  renderGames();
-  recalc(true);
 }
 
 function buildDatalist(){
@@ -1292,16 +1266,37 @@ function recalc(updateTargets){
 }
 
 async function boot(){
+  // Always show the 7-map editor even if CSV fails
   try{
     await loadCSV();
   }catch(e){
-    alert(e.message || String(e));
+    console.warn(e);
+    rankings = [{name:"NONE", rank:0}];
+    rankByNameLower = new Map([["none", 0]]);
+    const dl = document.getElementById("playersList");
+    if(dl){
+      dl.innerHTML = '<option value="NONE" label="NONE (0)"></option>';
+    }
   }
+
   loadState();
-  // Ensure fixed 7 maps layout
+
+  // Ensure fixed 7 maps layout (6 main + reset)
   if(!Array.isArray(games) || games.length !== 7){
     initGamesFixed();
+  }else{
+    // Normalize ids/labels/reset flag
+    games = games.map((g,i)=>({
+      id: (g && typeof g.id==='number') ? g.id : (i+1),
+      label: (i<6 ? `Map ${i+1}` : 'Reset (Map 7)'),
+      killsStr: (g && typeof g.killsStr==='string') ? g.killsStr : '',
+      killsInt: (g && typeof g.killsInt==='number') ? g.killsInt : 0,
+      placement: (g && typeof g.placement==='string') ? g.placement : '',
+      points: (g && typeof g.points==='number') ? g.points : 0,
+      isReset: (i===6)
+    }));
   }
+
   hookInputs();
   updateTeam(true);
   renderGames();
