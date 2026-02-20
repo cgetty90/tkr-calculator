@@ -233,6 +233,9 @@
     </div>
 
     <div class="spacer10"></div>
+    <div id="matchRemaining" class="muted">—</div>
+
+    <div class="spacer10"></div>
     <button id="resetBtn" type="button">Reset</button>
   </div>
 
@@ -301,7 +304,7 @@ function renderGames(){
       </div>
       <div>
         <label>Kills</label>
-        <input id="kills-${g.id}" type="number" min="0" step="1" value="${g.kills}" inputmode="numeric" autocomplete="off"/>
+        <input id="kills-${g.id}" type="number" min="0" step="1" value="${g.kills ? g.kills : ""}" placeholder="—" inputmode="numeric" autocomplete="off"/>
       </div>
       <div>
         <label>Placement</label>
@@ -327,7 +330,8 @@ function renderGames(){
     placeEl.value = g.placement;
 
     const onChange = () => {
-      g.kills = Math.max(0, parseInt(String(killsEl.value||"0"),10) || 0);
+      const raw = String(killsEl.value ?? "").trim();
+      g.kills = raw === "" ? 0 : Math.max(0, parseInt(raw, 10) || 0);
       g.placement = placeEl.value || "";
       recalc();
       saveState();
@@ -411,8 +415,10 @@ function recalc(){
 
 function updateTargets(teamRank, tot, mainLogged){
   const out = document.getElementById("targetsOut");
+  const matchOut = document.getElementById("matchRemaining");
   if(!(teamRank > 0)){
     out.textContent = "Select your squad to see remaining requirements.";
+    if(matchOut) matchOut.textContent = "—";
     return;
   }
   const target = parseFloat(document.getElementById("targetTotal").value || "0") || 0;
@@ -422,15 +428,18 @@ function updateTargets(teamRank, tot, mainLogged){
 
   if(needed <= 0){
     out.innerHTML = `✅ On target. Total: <b>${tot.toFixed(2)}</b> / <b>${target.toFixed(0)}</b>`;
+    if(matchOut) matchOut.innerHTML = out.innerHTML;
     return;
   }
   if(remaining === 0){
     out.innerHTML = `All 6 main maps set. Short by <b>${needed.toFixed(2)}</b> pts — improve using the Reset map.`;
+    if(matchOut) matchOut.innerHTML = out.innerHTML;
     return;
   }
   const perMap = needed / remaining;
   const killsNeed = minKillsForPoints(perMap, placement, teamRank);
   out.innerHTML = `Remaining: <b>${needed.toFixed(2)}</b> pts over <b>${remaining}</b> main map(s). Need ~<b>${perMap.toFixed(2)}</b> pts/map ⇒ <b>${killsNeed ?? "—"}</b> kills if you place <b>${placement}</b>.`;
+  if(matchOut) matchOut.innerHTML = out.innerHTML;
 }
 
 function buildDatalist(){
