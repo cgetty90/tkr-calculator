@@ -152,7 +152,7 @@
       background:var(--card2);
       border:1px solid var(--border2);
       border-radius:12px;
-      z-index:20;
+      z-index: 10000;
       display:none;
       box-shadow: 0 0 0 1px rgba(176,80,255,.14), 0 16px 40px rgba(0,0,0,.55);
     }
@@ -494,16 +494,6 @@ h1{
     <button id="resetBtn" type="button" title="Resets players, games, and target score">Reset</button>
   </div>
 </div>
-
-
-
-
-    <div class="meterWrap">
-      <div class="meterMeta"><b>What to do next</b></div>
-      <div class="spacer8"></div>
-      <div id="replacePlan" class="muted">—</div>
-    </div>
-  </div>
 </div>
 
 
@@ -752,9 +742,27 @@ async function loadCSV(){
   if(msEl) msEl.value = MILESTONES.join(", ");
 
   loadState();
+  // Ensure we always have the fixed 7-map layout (6 main + reset)
+  if(!Array.isArray(games) || games.length !== 7){
+    initGamesFixed();
+  }else{
+    // normalize legacy shapes
+    games = games.map((g,i)=>({
+      id: (g && typeof g.id==='number') ? g.id : (i+1),
+      label: (g && g.label) ? g.label : (i<6 ? `Map ${i+1}` : 'Reset (Map 7)'),
+      killsStr: (g && typeof g.killsStr==='string') ? g.killsStr : '',
+      killsInt: (g && typeof g.killsInt==='number') ? g.killsInt : 0,
+      placement: (g && typeof g.placement==='string') ? g.placement : '',
+      points: (g && typeof g.points==='number') ? g.points : 0,
+      isReset: (i===6) || !!(g && g.isReset)
+    }));
+    // force last to be reset
+    games[6].isReset = true;
+    games[6].label = 'Reset (Map 7)';
+    for(let i=0;i<6;i++){ games[i].isReset = false; games[i].label = `Map ${i+1}`; }
+  }
   updateTeam(true);
   renderGames();
-  recalc(true);
   recalc(true);
 }
 
@@ -951,30 +959,27 @@ function hookInputs(){
     const rankTxt = document.getElementById("teamRank").textContent;
     if(rankTxt !== "–"){
       calcKillsNeededBlocks(parseFloat(rankTxt));
-      updateReplacementHelper();
     }
     saveState();
   });
 
   
-  document.getElementById("resetBtn").addEventListener("click", () => {
-    // Reset players + games + target score. Keep static rules/multipliers.
+    document.getElementById("resetBtn").addEventListener("click", () => {
+    // Reset players + games + target score.
     ["p1","p2","p3","p4"].forEach(id => {
       const el = document.getElementById(id);
       if(el) el.value = "";
       hideSuggestions(id);
     });
-
     const tgt = document.getElementById("targetTotal");
-    if(tgt) tgt.value = String(300);
-
-    games = [];
-    gameNodes.forEach(n => n.remove());
-    gameNodes.clear();
-    nextGameId = 1;
-
+    if(tgt) tgt.value = "200";
+    clearState();
+    initGamesFixed();
     saveState();
     updateTeam(true);
+    renderGames();
+    recalc(true);
+    try{ window.scrollTo({top:0, behavior:"smooth"}); }catch(e){}
   });
 }
 
