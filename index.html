@@ -4,6 +4,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>The Krew • TKR Arena Scoring</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='50' font-size='50'%3E%F0%9F%92%A5%3C/text%3E%3C/svg%3E">
   <style>
     :root{
       --bg:#07020f;
@@ -432,6 +433,7 @@ h1{
 
   <div style="margin-top:10px">
     <span class="pill">Squad Rank: <b id="teamRank">–</b></span>
+    <span class="pill muted" id="csvStatus" style="display:none"></span>
     <span id="realPlayers" style="display:none">0</span>
     <span id="divisor" style="display:none">–</span>
   </div>
@@ -542,7 +544,7 @@ function initGamesFixed(){
 }
 
 // DOM cache for the fixed 7-map editor
-const gameNodes = new Map();
+let gameNodes = window.__tkr_gameNodes || (window.__tkr_gameNodes = new Map());
 
 function renderGames(){
   const host = document.getElementById("games");
@@ -713,7 +715,8 @@ async function loadCSV(){
   if(!r.ok) throw new Error("Failed to load rankings.csv (" + r.status + ")");
   const text = await r.text();
 
-  const lines = text.replace(//g,"").split("
+  const lines = text.replace(/
+/g,"").split("
 ").filter(l => l.trim().length);
   if(!lines.length) throw new Error("rankings.csv is empty");
 
@@ -737,6 +740,8 @@ async function loadCSV(){
 
   rankings.sort((a,b)=>a.name.localeCompare(b.name, undefined, { sensitivity:"base" }));
   buildDatalist();
+  const st = document.getElementById("csvStatus");
+  if(st){ st.style.display='none'; st.textContent=''; }
 }
 
 function buildDatalist(){
@@ -1271,6 +1276,8 @@ async function boot(){
     await loadCSV();
   }catch(e){
     console.warn(e);
+    const st = document.getElementById("csvStatus");
+    if(st){ st.style.display='inline-flex'; st.textContent='Rankings CSV not loaded (check rankings.csv is in the same folder)'; }
     rankings = [{name:"NONE", rank:0}];
     rankByNameLower = new Map([["none", 0]]);
     const dl = document.getElementById("playersList");
