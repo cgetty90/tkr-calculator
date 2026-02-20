@@ -551,6 +551,23 @@ function initGamesFixed(){
   }
   games.push({ id: 7, label: "Reset (Map 7)", killsStr: "", killsInt: 0, placement: "", points: 0, isReset: true });
 }
+
+// DOM cache for the fixed 7-map editor
+const gameNodes = new Map();
+
+function renderGames(){
+  const host = document.getElementById("games");
+  if(!host) return;
+  host.innerHTML = "";
+  gameNodes.clear();
+
+  games.forEach(g => {
+    const node = createGameNode(g);
+    gameNodes.set(g.id, node);
+    host.appendChild(node);
+  });
+}
+
 let gameNodes = new Map(); // id -> element
 let nextGameId = 1;
 
