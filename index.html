@@ -448,10 +448,10 @@ h1{
     </div>
 
     <div>
-      <label>Target total score (8 maps)</label>
-      <input id="targetTotal" type="number" min="0" step="0.01" value="300"/>
+      <label>Target total score (7 maps)</label>
+      <input id="targetTotal" type="number" min="0" step="0.01" value="200"/>
       <div class="muted" style="margin-top:6px;">
-        Counted maps: <b>8</b>. No max points per map.
+        Played maps: <b>7</b>; counted: <b>best 6</b>. No max points per map.
       </div>
     </div>
   </div>
@@ -466,14 +466,14 @@ h1{
   <div id="games" style="margin-top:10px;"></div>
 
   <div style="margin-top:10px">
-    <span class="pill">Total (8 maps): <b id="best4Total">0.00</b></span>
+    <span class="pill">Total (7 maps): <b id="best4Total">0.00</b></span>
     <span class="pill">Remaining Possible: <b id="remainingPossible">180.00</b></span>
     <span class="pill">Matches Logged: <b id="gamesEntered">0</b></span>
   </div>
 
   <div class="meterWrap" id="meterWrap">
     <div class="meterTop">
-      <div class="meterMeta"><b>Target Progress</b> — 8 maps vs target</div>
+      <div class="meterMeta"><b>Target Progress</b> — 7 maps vs target</div>
       <div class="meterMeta">Total: <b id="meterBest4">0.00</b> / Target: <b id="meterTarget">180.00</b></div>
     </div>
     <div class="spacer8"></div>
@@ -523,7 +523,8 @@ h1{
 
 
 <script>
-const COUNTED_GAMES = 8;
+const TOTAL_MAPS = 7;
+const BEST_COUNTED = 6;
 const MAX_POINTS = null; // no per-game cap in new rules
 
 // Local save (per device)
@@ -996,15 +997,15 @@ function calcKillsNeededBlocks(teamRank){
   const placementKey = document.getElementById("assumedPlacement").value || "1st";
   const placementLabel = PLACEMENTS.find(p=>p.key===placementKey)?.label || placementKey;
 
-  const normal = games.filter(g => !g.isReset).slice(0, COUNTED_GAMES);
+  const normal = games.filter(g => !g.isReset).slice(0, TOTAL_MAPS);
   const reset = games.find(g => g.isReset) || null;
 
   const baseTotal = normal.reduce((s,g)=>s+g.points, 0);
   const lowest = normal.length ? normal.reduce((m,g)=>Math.min(m,g.points), Infinity) : 0;
 
-  // Effective total if reset exists and improves the lowest of the 8 maps
+  // Effective total if reset exists and improves the lowest of the 7 maps
   let effectiveTotal = baseTotal;
-  if(normal.length === COUNTED_GAMES && reset && reset.points > lowest){
+  if(normal.length === TOTAL_MAPS && reset && reset.points > lowest){
     effectiveTotal = baseTotal - lowest + reset.points;
   }
 
@@ -1015,20 +1016,20 @@ function calcKillsNeededBlocks(teamRank){
     return;
   }
 
-  const remaining = Math.max(0, COUNTED_GAMES - normal.length);
+  const remaining = Math.max(0, TOTAL_MAPS - normal.length);
   const neededTotal = Math.max(0, targetTotal - effectiveTotal);
   const perMapNeed = (remaining > 0) ? Math.ceil(neededTotal / remaining) : 0;
 
   // Summary
   document.getElementById("killsNeeded45").innerHTML =
     `Current total: <b>${effectiveTotal.toFixed(0)}</b> / Target: <b>${targetTotal.toFixed(0)}</b>` +
-    `<div class="muted" style="margin-top:6px;">Scoring: (Kills + Placement Pts + Milestone Pts) ÷ (TeamRank/10), rounded down. Milestones are +5 each at 50/60/70/80/90/100.</div>`;
+    `<div class="muted" style="margin-top:6px;">Scoring: (Kills + Placement Pts + Milestone Pts) ÷ (TeamRank/10), rounded down. Milestones are +5 each at 50/60/70/70/90/100.</div>`;
 
   if(remaining === 0){
     document.getElementById("killsNeededTarget").innerHTML =
       (neededTotal <= 0)
-        ? `✅ Target met with your 8 maps.`
-        : `All 8 maps logged. You’re short by <b>${neededTotal.toFixed(0)}</b> points — use the <b>Reset Game</b> to replace your lowest map.`;
+        ? `✅ Target met with your 7 maps.`
+        : `All 7 maps logged. You’re short by <b>${neededTotal.toFixed(0)}</b> points — use the <b>Reset Game</b> to replace your lowest map.`;
     return;
   }
 
@@ -1054,7 +1055,7 @@ function updateReplacementHelper(){
     return;
   }
 
-  const normal = games.filter(g => !g.isReset).slice(0, COUNTED_GAMES);
+  const normal = games.filter(g => !g.isReset).slice(0, TOTAL_MAPS);
   const reset = games.find(g => g.isReset) || null;
 
   if(normal.length === 0 && !reset){
@@ -1066,21 +1067,21 @@ function updateReplacementHelper(){
   const baseTotal = normal.reduce((s,g)=>s+g.points, 0);
   const lowest = normal.length ? normal.reduce((m,g)=>Math.min(m,g.points), Infinity) : 0;
 
-  const targetTotal = parseFloat(document.getElementById("targetTotal").value || String(COUNTED_GAMES*0));
+  const targetTotal = parseFloat(document.getElementById("targetTotal").value || String(TOTAL_MAPS*0));
   const placementKey = document.getElementById("assumedPlacement").value || "1st";
   const placementLabel = PLACEMENTS.find(p=>p.key===placementKey)?.label || placementKey;
 
-  // If reset exists and improves lowest (only meaningful once 8 maps are in)
+  // If reset exists and improves lowest (only meaningful once 7 maps are in)
   let effectiveTotal = baseTotal;
   let isReplacing = false;
-  if(normal.length === COUNTED_GAMES && reset && reset.points > lowest){
+  if(normal.length === TOTAL_MAPS && reset && reset.points > lowest){
     effectiveTotal = baseTotal - lowest + reset.points;
     isReplacing = true;
   }
 
   summaryEl.innerHTML =
     `<b>RESET GAME</b><br>` +
-    `Logged maps: <b>${normal.length}</b>/8` +
+    `Logged maps: <b>${normal.length}</b>/7` +
     (reset ? ` • Reset logged: <b>Yes</b>` : ` • Reset logged: <b>No</b>`) +
     `<br>Lowest map (so far): <b>${(lowest===Infinity?0:lowest).toFixed(0)}</b> pts`;
 
@@ -1088,11 +1089,11 @@ function updateReplacementHelper(){
   if(reset){
     planEl.innerHTML =
       `Reset score: <b>${reset.points.toFixed(0)}</b> pts.<br>` +
-      (normal.length === COUNTED_GAMES
+      (normal.length === TOTAL_MAPS
         ? (isReplacing
             ? `✅ Reset is replacing your lowest map. New total: <b>${effectiveTotal.toFixed(0)}</b>.`
             : `Reset does not beat your lowest map, so it won’t replace anything.`)
-        : `Reset will only replace a map once all 8 maps are logged.`);
+        : `Reset will only replace a map once all 7 maps are logged.`);
     return;
   }
 
@@ -1102,10 +1103,10 @@ function updateReplacementHelper(){
     return;
   }
 
-  // Best-case with reset is: baseTotal - lowest + resetPts  (once 8 maps are logged)
-  if(normal.length < COUNTED_GAMES){
+  // Best-case with reset is: baseTotal - lowest + resetPts  (once 7 maps are logged)
+  if(normal.length < TOTAL_MAPS){
     planEl.innerHTML =
-      `You haven’t logged all 8 maps yet. A reset game will replace your lowest map once you’ve logged 8.`;
+      `You haven’t logged all 7 maps yet. A reset game will replace your lowest map once you’ve logged 8.`;
     return;
   }
 
@@ -1256,10 +1257,10 @@ function recalc(forceSort){
   });
 
   const sortedByPts = [...games].sort((a,b) => (b.points - a.points) || (a.id - b.id));
-  const best4 = sortedByPts.slice(0, COUNTED_GAMES);
+  const best4 = sortedByPts.slice(0, TOTAL_MAPS);
   const best4Total = best4.reduce((s,g)=>s+g.points, 0);
 
-  const maxTotal = COUNTED_GAMES * MAX_POINTS;
+  const maxTotal = TOTAL_MAPS * MAX_POINTS;
   const remaining = Math.max(0, maxTotal - best4Total);
 
   document.getElementById("best4Total").textContent = best4Total.toFixed(2);
