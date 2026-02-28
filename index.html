@@ -283,6 +283,21 @@
       .brandLogo{ height:40px; }
     }
 
+  
+    /* Mobile player picker list */
+    .pickerItem{
+      padding:10px 12px;
+      border-bottom:1px solid rgba(77,232,255,.10);
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:center;
+      cursor:pointer;
+      font-size:14px;
+    }
+    .pickerItem:last-child{ border-bottom:none; }
+    .pickerItem:hover{ background: rgba(77,232,255,.10); }
+
   </style>
 </head>
 <body>
@@ -378,6 +393,33 @@
     <div class="spacer10"></div>
     <button id="resetBtn" type="button" class="danger">Reset</button>
   </div>
+
+
+  <!-- Player Picker Modal (mobile) -->
+  <div class="backdrop" id="playerPickerBg" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal">
+      <div class="modalHeader">
+        <h3>SELECT PLAYER</h3>
+        <button type="button" class="modalClose" id="playerPickerClose">Close</button>
+      </div>
+
+      <div class="spacer10"></div>
+
+      <div>
+        <label>Search</label>
+        <input id="playerPickerSearch" type="text" placeholder="Type to filter names…" autocomplete="off" autocapitalize="off" spellcheck="false"/>
+      </div>
+
+      <div class="spacer10"></div>
+
+      <div id="playerPickerList" style="max-height:45vh; overflow:auto; border:1px solid rgba(77,232,255,.18); border-radius:12px; background: rgba(0,0,0,.10);">
+      </div>
+
+      <div class="spacer10"></div>
+      <div class="muted">Tip: pick from the list to ensure the name matches the ranking sheet.</div>
+    </div>
+  </div>
+
 
   <!-- Add Game Modal -->
   <div class="backdrop" id="modalBg" role="dialog" aria-modal="true" aria-hidden="true">
@@ -534,6 +576,70 @@ const IS_MOBILE = (
   (navigator.maxTouchPoints > 0)
 );
 let selectingSuggestion = false;
+
+// ===== Mobile Player Picker (modal) =====
+let activePlayerInputId = null;
+
+function openPlayerPicker(inputId){
+  const bg = document.getElementById("playerPickerBg");
+  const search = document.getElementById("playerPickerSearch");
+  const list = document.getElementById("playerPickerList");
+  if(!bg || !search || !list) return;
+
+  activePlayerInputId = inputId;
+  bg.style.display = "flex";
+  bg.setAttribute("aria-hidden", "false");
+  search.value = "";
+  renderPlayerPickerList("");
+  setTimeout(()=> search.focus(), 0);
+}
+
+function closePlayerPicker(){
+  const bg = document.getElementById("playerPickerBg");
+  if(!bg) return;
+  bg.style.display = "none";
+  bg.setAttribute("aria-hidden", "true");
+  activePlayerInputId = null;
+}
+
+function renderPlayerPickerList(query){
+  const list = document.getElementById("playerPickerList");
+  if(!list) return;
+
+  const q = (query || "").trim().toLowerCase();
+  const all = getAllPlayers(); // includes NONE
+
+  let matches = all.filter(p => !q || p.name.toLowerCase().includes(q));
+  matches.sort((a,b)=>{
+    const as = q && a.name.toLowerCase().startsWith(q);
+    const bs = q && b.name.toLowerCase().startsWith(q);
+    if(as != bs) return as ? -1 : 1;
+    return a.name.localeCompare(b.name, undefined, {sensitivity:"base"});
+  });
+  matches = matches.slice(0, 250);
+
+  list.innerHTML = matches.map(p => `
+    <div class="pickerItem" data-name="${escapeHtml(p.name)}">
+      <span>${escapeHtml(p.name)}</span>
+      <span class="suggestionMeta">(${p.rank})</span>
+    </div>
+  `).join("");
+
+  list.querySelectorAll(".pickerItem").forEach(item=>{
+    item.addEventListener("click", ()=>{
+      const name = item.getAttribute("data-name");
+      const input = activePlayerInputId ? document.getElementById(activePlayerInputId) : null;
+      if(input){
+        input.value = name;
+        recalc();
+        saveState();
+      }
+      closePlayerPicker();
+    });
+  });
+}
+
+
 
 function getAllPlayers(){
   return [{name:"NONE", rank:0}, ...rankings];
