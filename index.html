@@ -223,6 +223,46 @@
     .modalClose{ width:auto; padding:6px 10px; }
 
     .playerInput{ padding:5px 8px; font-size:13px; }
+  
+    /* Custom player autocomplete (more reliable than datalist) */
+    .playerWrap{ position:relative; }
+    .suggestions{
+      position:absolute;
+      top:calc(100% + 6px);
+      left:0; right:0;
+      max-height:240px;
+      overflow:auto;
+      background:var(--card2);
+      border:1px solid rgba(77,232,255,.45);
+      border-radius:12px;
+      z-index: 9999;
+      display:none;
+      box-shadow: 0 0 0 1px rgba(77,232,255,.10), 0 16px 40px rgba(0,0,0,.55);
+    }
+    .suggestionItem{
+      padding:8px 10px;
+      cursor:pointer;
+      border-bottom:1px solid rgba(77,232,255,.12);
+      font-size:13px;
+      line-height:1.2;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:center;
+    }
+    .suggestionItem:last-child{ border-bottom:none; }
+    .suggestionItem:hover, .suggestionItem.active{ background: rgba(77,232,255,.12); }
+    .suggestionMeta{ color: var(--muted); font-size:12px; white-space:nowrap; }
+    .suggestions.fixed{
+      position:fixed !important;
+      left: 12px !important;
+      right: auto !important;
+      width: calc(100vw - 24px) !important;
+      max-height: 45vh !important;
+      z-index: 999999 !important;
+      pointer-events:auto;
+    }
+
   </style>
 </head>
 <body>
@@ -233,24 +273,30 @@
     <h3>SQUAD BUILDER</h3>
     <datalist id="playersList"></datalist>
 
+    
     <div class="grid grid-4">
-      <div>
+      <div class="playerWrap">
         <label>Player 1</label>
-        <input class="playerInput" id="p1" list="playersList" placeholder="Type a name (or NONE)" autocomplete="off" autocapitalize="off" spellcheck="false"/>
+        <input class="playerInput" id="p1" placeholder="Type a name (or NONE)" autocomplete="new-password" autocapitalize="off" spellcheck="false" name="tkr_p1"/>
+        <div class="suggestions" id="sug-p1"></div>
       </div>
-      <div>
+      <div class="playerWrap">
         <label>Player 2</label>
-        <input class="playerInput" id="p2" list="playersList" placeholder="Type a name (or NONE)" autocomplete="off" autocapitalize="off" spellcheck="false"/>
+        <input class="playerInput" id="p2" placeholder="Type a name (or NONE)" autocomplete="new-password" autocapitalize="off" spellcheck="false" name="tkr_p2"/>
+        <div class="suggestions" id="sug-p2"></div>
       </div>
-      <div>
+      <div class="playerWrap">
         <label>Player 3</label>
-        <input class="playerInput" id="p3" list="playersList" placeholder="Type a name (or NONE)" autocomplete="off" autocapitalize="off" spellcheck="false"/>
+        <input class="playerInput" id="p3" placeholder="Type a name (or NONE)" autocomplete="new-password" autocapitalize="off" spellcheck="false" name="tkr_p3"/>
+        <div class="suggestions" id="sug-p3"></div>
       </div>
-      <div>
+      <div class="playerWrap">
         <label>Player 4</label>
-        <input class="playerInput" id="p4" list="playersList" placeholder="Type a name (or NONE)" autocomplete="off" autocapitalize="off" spellcheck="false"/>
+        <input class="playerInput" id="p4" placeholder="Type a name (or NONE)" autocomplete="new-password" autocapitalize="off" spellcheck="false" name="tkr_p4"/>
+        <div class="suggestions" id="sug-p4"></div>
       </div>
     </div>
+
 
     <div style="margin-top:10px">
       <span class="pill">Squad Rank: <b id="teamRank">–</b></span>
@@ -397,6 +443,10 @@ let nextId = 1;
 function nowMs(){ return Date.now(); }
 function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
 function fmt2(x){ return (Number.isFinite(x) ? x : 0).toFixed(2); }
+function escapeHtml(str){
+  return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/\'/g,"&#039;");
+}
+
 
 function parseCSVLine(line){
   const out = [];
@@ -455,6 +505,130 @@ function buildDatalist(){
   };
   addOpt("NONE", 0);
   for(const r of rankings){ addOpt(r.name, r.rank); }
+}
+
+// ===== Custom autocomplete (reliable on mobile + desktop) =====
+const IS_MOBILE = (
+  (window.matchMedia && window.matchMedia("(pointer: coarse)").matches) ||
+  ("ontouchstart" in window) ||
+  (navigator.maxTouchPoints > 0)
+);
+let selectingSuggestion = false;
+
+function getAllPlayers(){
+  return [{name:"NONE", rank:0}, ...rankings];
+}
+function getRankForName(name){
+  if(!name) return null;
+  if(name.toLowerCase() === "none") return 0;
+  const r = rankByNameLower.get(name.toLowerCase());
+  return (typeof r === "number") ? r : null;
+}
+
+function hideSuggestions(id){
+  const box = document.getElementById("sug-" + id);
+  if(!box) return;
+  box.style.display = "none";
+  box.innerHTML = "";
+  box.dataset.active = "-1";
+  box.classList.remove("fixed");
+  box.style.top = "";
+  box.style.left = "";
+}
+
+function showSuggestions(id){
+  const input = document.getElementById(id);
+  const box = document.getElementById("sug-" + id);
+  if(!input || !box) return;
+
+  const q = (input.value || "").trim().toLowerCase();
+  const all = getAllPlayers();
+
+  let matches = all.filter(p => p.name.toLowerCase().includes(q));
+  matches.sort((a,b)=>{
+    const as = q && a.name.toLowerCase().startsWith(q);
+    const bs = q && b.name.toLowerCase().startsWith(q);
+    if(as !== bs) return as ? -1 : 1;
+    return a.name.localeCompare(b.name, undefined, {sensitivity:"base"});
+  });
+
+  if(!q){
+    matches = all; // show all when empty
+  }
+  matches = matches.slice(0, 14);
+
+  if(matches.length === 0){
+    hideSuggestions(id);
+    return;
+  }
+
+  box.innerHTML = matches.map((p,i)=>(
+    `<div class="suggestionItem" data-name="${escapeHtml(p.name)}">
+        <span>${escapeHtml(p.name)}</span>
+        <span class="suggestionMeta">(${p.rank})</span>
+     </div>`
+  )).join("");
+  box.dataset.active = "-1";
+  box.style.display = "block";
+
+  if(IS_MOBILE){
+    box.classList.add("fixed");
+    const r = input.getBoundingClientRect();
+    const top = Math.min(window.innerHeight - 12, r.bottom + 8);
+    box.style.top = top + "px";
+    box.style.left = "12px";
+  }else{
+    box.classList.remove("fixed");
+    box.style.top = "";
+    box.style.left = "";
+  }
+
+  const pick = (el) => {
+    const item = el && el.closest ? el.closest(".suggestionItem") : null;
+    if(!item) return;
+    selectingSuggestion = true;
+    input.value = item.getAttribute("data-name");
+    hideSuggestions(id);
+    recalc();
+    saveState();
+    setTimeout(()=> selectingSuggestion = false, 0);
+  };
+
+  // pointerdown works better than click on mobile browsers
+  box.onpointerdown = (e) => { e.preventDefault(); e.stopPropagation(); pick(e.target); };
+  box.ontouchstart = (e) => { e.preventDefault(); e.stopPropagation(); pick(e.target); };
+}
+
+function handleSuggestKeys(e, id){
+  const box = document.getElementById("sug-" + id);
+  if(!box || box.style.display !== "block") return;
+  const items = Array.from(box.querySelectorAll(".suggestionItem"));
+  if(!items.length) return;
+
+  let active = parseInt(box.dataset.active || "-1", 10);
+
+  if(e.key === "ArrowDown"){
+    e.preventDefault();
+    active = Math.min(items.length - 1, active + 1);
+  }else if(e.key === "ArrowUp"){
+    e.preventDefault();
+    active = Math.max(0, active - 1);
+  }else if(e.key === "Enter"){
+    if(active >= 0 && active < items.length){
+      e.preventDefault();
+      items[active].dispatchEvent(new Event("pointerdown", {bubbles:true}));
+    }
+    return;
+  }else if(e.key === "Escape"){
+    hideSuggestions(id);
+    return;
+  }else{
+    return;
+  }
+
+  items.forEach((it,i)=>it.classList.toggle("active", i===active));
+  box.dataset.active = String(active);
+  if(items[active]) items[active].scrollIntoView({block:"nearest"});
 }
 
 function normalizeName(v){
@@ -760,8 +934,12 @@ async function boot(){
   document.getElementById("targetTotal").addEventListener("input", ()=>{ recalc(); saveState(); });
 
   ["p1","p2","p3","p4"].forEach(id=>{
-    document.getElementById(id).addEventListener("input", ()=>{ recalc(); saveState(); });
-    document.getElementById(id).addEventListener("change", ()=>{ recalc(); saveState(); });
+    const el = document.getElementById(id);
+    el.addEventListener("input", ()=>{ showSuggestions(id); recalc(); saveState(); });
+    el.addEventListener("focus", ()=>{ showSuggestions(id); });
+    el.addEventListener("keydown", (e)=> handleSuggestKeys(e, id));
+    el.addEventListener("change", ()=>{ recalc(); saveState(); });
+    el.addEventListener("blur", ()=>{ setTimeout(()=>{ if(!selectingSuggestion) hideSuggestions(id); }, 250); });
   });
 
   document.getElementById("resetBtn").addEventListener("click", ()=>{
@@ -795,6 +973,8 @@ async function boot(){
   recalc();
 }
 
+window.addEventListener('scroll', ()=>{ if(IS_MOBILE){ ['p1','p2','p3','p4'].forEach(hideSuggestions); } }, {passive:true});
+window.addEventListener('resize', ()=>{ if(IS_MOBILE){ ['p1','p2','p3','p4'].forEach(hideSuggestions); } });
 window.addEventListener("DOMContentLoaded", boot);
 })();
 </script>
