@@ -7,24 +7,26 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='50' font-size='50'%3E%F0%9F%92%A5%3C/text%3E%3C/svg%3E">
   <style>
     :root{
-      --bg:#04101f;                 /* deep navy */
-      --text:#f2fbff;               /* near-white */
+      --bg:#04101f;
+      --text:#f2fbff;
       --muted: rgba(242,251,255,.72);
 
       --card: rgba(6,24,44,.86);
       --card2: rgba(4,18,34,.92);
 
-      --accent:#4de8ff;             /* neon baby blue */
-      --accent2:#00ffa6;            /* neon mint */
+      --accent:#4de8ff;   /* neon baby blue */
+      --accent2:#00ffa6;  /* neon mint */
       --border: rgba(77, 232, 255, .22);
       --border2: rgba(77, 232, 255, .55);
-      --glow: rgba(77, 232, 255, .16);
+      --glow: rgba(77, 232, 255, .14);
 
       --btn: rgba(77, 232, 255, .14);
       --btnHover: rgba(77, 232, 255, .22);
-
       --pillBg: rgba(4,18,34,.96);
+
+      --danger: rgba(255, 94, 122, .85);
     }
+
     *{ box-sizing:border-box; }
     body{
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
@@ -130,9 +132,14 @@
       box-shadow: 0 0 18px rgba(77,232,255,.10);
     }
     button:hover{ background:var(--btnHover); box-shadow: 0 0 26px rgba(77,232,255,.18); }
+    button.danger{
+      border-color: rgba(255,94,122,.7);
+      background: rgba(255,94,122,.10);
+    }
+    button.danger:hover{ background: rgba(255,94,122,.16); box-shadow: 0 0 18px rgba(255,94,122,.14); }
 
     .grid{ display:grid; gap:16px; }
-    .grid-4{ grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+    .grid-4{ grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
     .grid-2{ grid-template-columns: 1fr 1fr; }
     @media (max-width:900px){ .grid-2{ grid-template-columns: 1fr; } }
 
@@ -153,19 +160,68 @@
     .muted{ color:var(--muted); font-size:12px; }
     .spacer10{ height:10px; }
 
-    .gamesList{ display:flex; flex-direction:column; gap:10px; margin-top:6px; }
-    .gameRow{ display:grid; grid-template-columns: 120px 1fr 1fr 140px; gap:10px; align-items:end; padding:10px; border-radius:14px;
-              border:1px solid rgba(255,255,255,.10); background: rgba(0,0,0,.12); }
-    @media (max-width: 520px){
-      .gameRow{ grid-template-columns: 1fr 1fr; }
-      .gameRow .colLabel{ grid-column: 1 / -1; }
-      .gameRow .colScore{ grid-column: 1 / -1; }
+    /* Match list */
+    .gamesList{ display:flex; flex-direction:column; gap:10px; margin-top:10px; }
+    .gameCard{
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:14px;
+      padding:10px;
+      background: rgba(0,0,0,.12);
+      box-shadow: 0 0 0 1px rgba(77,232,255,.08);
     }
-    .colScore{ padding:10px 12px; border:1px solid rgba(255,255,255,.10); border-radius:12px; background: rgba(0,0,0,.15); }
+    .gameTop{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .gameMeta{ font-size:12px; color:var(--muted); margin-top:4px; }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:3px 8px;
+      border-radius:999px;
+      font-size:12px;
+      border:1px solid rgba(77,232,255,.45);
+      background: rgba(7,9,18,.92);
+      color: var(--text);
+    }
+    .badge.counted{
+      border-color: rgba(0,255,166,.60);
+      box-shadow: 0 0 18px rgba(0,255,166,.10);
+    }
+    .badge.low{
+      border-color: rgba(255,255,255,.14);
+      opacity:.85;
+    }
     .scoreBig{ font-weight:900; font-size:18px; letter-spacing:.3px; }
-    .scoreSub{ font-size:12px; opacity:.8; margin-top:2px; }
+    .rowBtns{ display:flex; gap:10px; align-items:center; }
+    .rowBtns button{ width:auto; padding:7px 10px; }
 
-    /* Make datalist picker feel nicer */
+    /* Modal */
+    .backdrop{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.65);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+      z-index:99999;
+    }
+    .modal{
+      width:min(560px, 96vw);
+      background: linear-gradient(180deg, rgba(10,12,22,.98), rgba(7,9,18,.96));
+      border:1px solid rgba(77,232,255,.30);
+      border-radius:16px;
+      padding:14px;
+      box-shadow: 0 0 0 1px rgba(77,232,255,.10), 0 24px 70px rgba(0,0,0,.7);
+    }
+    .modalHeader{ display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .modalHeader h3{ margin:0; }
+    .modalClose{ width:auto; padding:6px 10px; }
+
     .playerInput{ padding:5px 8px; font-size:13px; }
   </style>
 </head>
@@ -204,260 +260,143 @@
 
   <div class="card">
     <h3>KILL TARGETS</h3>
+
     <div class="grid grid-2">
       <div>
-        <label>Assumed placement (for remaining maps)</label>
+        <label>Assumed placement (for new games)</label>
         <select id="assumedPlacement">
           <option value="1st">1st</option>
           <option value="2nd">2nd</option>
           <option value="3rd">3rd</option>
           <option value="4th">4th</option>
           <option value="5th">5th</option>
-          <option value="6th+">6th+</option>
+          <option value="6-10">6–10th</option>
+          <option value="11+">11th+</option>
         </select>
       </div>
       <div>
-        <label>Target total score (best 6)</label>
-        <input id="targetTotal" type="number" min="0" step="0.01" value="200"/>
-        <div class="muted" style="margin-top:6px;">Played maps: <b>7</b>; counted: <b>best 6</b>.</div>
+        <label>Target total score (best 4)</label>
+        <input id="targetTotal" type="number" min="0" step="0.01" value="180"/>
+        <div class="muted" style="margin-top:6px;">Max per game: <b>45</b>. Counted: <b>best 4</b>.</div>
       </div>
     </div>
+
     <div class="spacer10"></div>
-    <div id="targetsOut" class="muted">Select your squad to see remaining requirements.</div>
+
+    <div class="grid grid-2">
+      <div>
+        <div class="muted" style="margin-bottom:6px;">Kill requirement (based on remaining counted slots)</div>
+        <div id="targetsOut" class="muted">Select your squad to see requirements.</div>
+      </div>
+      <div>
+        <div class="muted" style="margin-bottom:6px;">Replacement calculator (best 4)</div>
+        <div id="replaceOut" class="muted">Add at least 4 games to unlock.</div>
+      </div>
+    </div>
   </div>
 
   <div class="card">
     <h3>MATCH LOG</h3>
-    <div class="muted">Enter kills + placement for each map. Only the best <b>6</b> count. Map 7 is the <b>Reset</b> map (replaces your lowest if it’s better).</div>
+    <div class="muted">Add as many games as you want. Only the <b>best 4</b> count (each capped at <b>45</b>).</div>
+
+    <div class="spacer10"></div>
+    <button id="addGameBtn" type="button">Add game</button>
+
     <div id="games" class="gamesList"></div>
 
     <div style="margin-top:10px">
-      <span class="pill">Total (best 6): <b id="totalOut">0.00</b></span>
-      <span class="pill">Main maps logged: <b id="loggedOut">0</b>/6</span>
+      <span class="pill">Total (best 4): <b id="totalOut">0.00</b></span>
+      <span class="pill">Games recorded: <b id="gamesCount">0</b></span>
     </div>
 
     <div class="spacer10"></div>
-    <div id="matchRemaining" class="muted">—</div>
+    <button id="resetBtn" type="button" class="danger">Reset</button>
+  </div>
 
-    <div class="spacer10"></div>
-    <button id="resetBtn" type="button">Reset</button>
+  <!-- Add Game Modal -->
+  <div class="backdrop" id="modalBg" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal">
+      <div class="modalHeader">
+        <h3>ADD GAME</h3>
+        <button type="button" class="modalClose" id="modalClose">Close</button>
+      </div>
+
+      <div class="spacer10"></div>
+
+      <div class="grid grid-2">
+        <div>
+          <label>Total kills</label>
+          <input id="modalKills" type="number" min="0" step="1" placeholder="e.g. 68" inputmode="numeric" autocomplete="off"/>
+        </div>
+        <div>
+          <label>Placement</label>
+          <select id="modalPlace">
+            <option value="1st">1st</option>
+            <option value="2nd">2nd</option>
+            <option value="3rd">3rd</option>
+            <option value="4th">4th</option>
+            <option value="5th">5th</option>
+            <option value="6-10">6–10th</option>
+            <option value="11+">11th+</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="spacer10"></div>
+      <button id="modalSave" type="button">Save game</button>
+
+      <div class="spacer10"></div>
+      <div class="muted">
+        Scoring: <b>kills × placement</b> ÷ <b>(rank/10)</b>, then <b>WIN kill bonus</b> (non-stacking), cap at <b>45</b>.
+      </div>
+    </div>
   </div>
 
 <script>
 (() => {
 'use strict';
 
-const TOTAL_MAPS = 7;
-const MAIN_MAPS = 6;
+/* ===== Rules ===== */
+const BEST_COUNTED = 4;
+const MAX_POINTS_PER_GAME = 45;
 
-const STORAGE_KEY = "tkr_scoring_newrules_v1";
+const PLACEMENT_MULT = {
+  "1st": 2.25,
+  "2nd": 1.50,
+  "3rd": 1.50,
+  "4th": 1.25,
+  "5th": 1.25,
+  "6-10": 1.00,
+  "11+": 0.75
+};
+
+// Win-only, non-stacking bonus points (applied AFTER division)
+const WIN_BONUS_THRESHOLDS = [
+  { kills: 85, bonus: 6 },
+  { kills: 82, bonus: 5 },
+  { kills: 78, bonus: 4 },
+  { kills: 74, bonus: 3 },
+  { kills: 70, bonus: 2 },
+  { kills: 60, bonus: 1 }
+];
+
+/* ===== Local save ===== */
+const STORAGE_KEY = "tkr_best4_v1";
 const TTL_MS = 24 * 60 * 60 * 1000;
 
-const MILESTONES = [50,60,70,80,90,100];
-const PLACEMENT_POINTS = { "1st":25, "2nd":15, "3rd":9, "4th":6, "5th":3, "6th+":0 };
-
+/* ===== Rankings ===== */
 let rankings = [];
 let rankByNameLower = new Map();
+
+/* ===== Games =====
+  { id, kills, placement, points }
+*/
 let games = [];
+let nextId = 1;
 
 function nowMs(){ return Date.now(); }
-
-function milestonePoints(k){
-  const kills = Number.isFinite(k) ? k : 0;
-  let n = 0;
-  for(const m of MILESTONES){ if(kills >= m) n++; }
-  return n * 5;
-}
-
-function calcGamePoints(kills, placement, teamRank){
-  const div = teamRank / 10;
-  if(!(div > 0)) return 0;
-  const k = Number.isFinite(kills) ? kills : 0;
-  const place = PLACEMENT_POINTS[placement] ?? 0;
-  const ms = milestonePoints(k);
-  return (k + place + ms) / div;
-}
-
-function minKillsForPoints(targetPoints, placement, teamRank){
-  if(!(targetPoints > 0)) return 0;
-  for(let k=0;k<=2500;k++){
-    const pts = calcGamePoints(k, placement, teamRank);
-    if(pts >= targetPoints - 1e-9) return k;
-  }
-  return null;
-}
-
-function initGames(){
-  games = [];
-  for(let i=1;i<=MAIN_MAPS;i++){
-    games.push({ id:i, label:`Map ${i}`, isReset:false, kills:0, placement:"", points:0 });
-  }
-  games.push({ id:7, label:"Reset (Map 7)", isReset:true, kills:0, placement:"", points:0 });
-}
-
-function renderGames(){
-  const host = document.getElementById("games");
-  host.innerHTML = "";
-  for(const g of games){
-    const row = document.createElement("div");
-    row.className = "gameRow";
-    row.innerHTML = `
-      <div class="colLabel">
-        <label>${g.label}</label>
-        <div class="muted" style="margin-top:4px;">${g.isReset ? "Reset map" : "Main map"}</div>
-      </div>
-      <div>
-        <label>Kills</label>
-        <input id="kills-${g.id}" type="number" min="0" step="1" value="${g.kills ? g.kills : ""}" placeholder="—" inputmode="numeric" autocomplete="off"/>
-      </div>
-      <div>
-        <label>Placement</label>
-        <select id="place-${g.id}">
-          <option value="">—</option>
-          <option value="1st">1st</option>
-          <option value="2nd">2nd</option>
-          <option value="3rd">3rd</option>
-          <option value="4th">4th</option>
-          <option value="5th">5th</option>
-          <option value="6th+">6th+</option>
-        </select>
-      </div>
-      <div class="colScore">
-        <div class="scoreBig" id="score-${g.id}">0.00</div>
-        <div class="scoreSub" id="sub-${g.id}">—</div>
-      </div>
-    `;
-    host.appendChild(row);
-
-    const killsEl = row.querySelector(`#kills-${g.id}`);
-    const placeEl = row.querySelector(`#place-${g.id}`);
-    placeEl.value = g.placement;
-
-    const onChange = () => {
-      const raw = String(killsEl.value ?? "").trim();
-      g.kills = raw === "" ? 0 : Math.max(0, parseInt(raw, 10) || 0);
-      g.placement = placeEl.value || "";
-      recalc();
-      saveState();
-    };
-    killsEl.addEventListener("input", onChange);
-    placeEl.addEventListener("change", onChange);
-  }
-}
-
-function normalizeName(v){
-  return String(v||"").trim();
-}
-
-function computeTeamRank(){
-  const ids = ["p1","p2","p3","p4"];
-  let sum = 0;
-  for(const id of ids){
-    const name = normalizeName(document.getElementById(id).value);
-    if(!name) continue;
-    if(name.toLowerCase() === "none") continue;
-    const r = rankByNameLower.get(name.toLowerCase());
-    if(typeof r === "number") sum += r;
-  }
-  return sum;
-}
-
-function effectiveTotal(){
-  const main = games.filter(g=>!g.isReset);
-  const reset = games.find(g=>g.isReset);
-
-  // compute points per game first
-  let lowestIdx = 0;
-  let lowestVal = Infinity;
-  for(let i=0;i<main.length;i++){
-    if(main[i].points < lowestVal){
-      lowestVal = main[i].points;
-      lowestIdx = i;
-    }
-  }
-  let total = main.reduce((s,g)=>s+g.points,0);
-  if(reset && reset.placement){
-    if(reset.points > lowestVal){
-      total = total - lowestVal + reset.points;
-    }
-  }
-  return total;
-}
-
-function recalc(){
-  const teamRank = computeTeamRank();
-  const teamRankEl = document.getElementById("teamRank");
-  teamRankEl.textContent = teamRank > 0 ? teamRank.toFixed(2) : "–";
-
-  // compute points
-  for(const g of games){
-    g.points = (teamRank > 0 && g.placement) ? calcGamePoints(g.kills, g.placement, teamRank) : 0;
-    const scoreEl = document.getElementById(`score-${g.id}`);
-    const subEl = document.getElementById(`sub-${g.id}`);
-    if(scoreEl) scoreEl.textContent = g.points.toFixed(2);
-    if(subEl){
-      if(!(teamRank>0)) subEl.textContent = "Select squad";
-      else if(!g.placement) subEl.textContent = "Select placement";
-      else {
-        const div = (teamRank/10).toFixed(2);
-        const ms = milestonePoints(g.kills);
-        const place = PLACEMENT_POINTS[g.placement] ?? 0;
-        subEl.textContent = `${g.kills} kills + ${ms} ms + ${place} place ÷ ${div}`;
-      }
-    }
-  }
-
-  // totals
-  const mainLogged = games.filter(g=>!g.isReset && g.placement).length;
-  document.getElementById("loggedOut").textContent = String(mainLogged);
-
-  const tot = effectiveTotal();
-  document.getElementById("totalOut").textContent = tot.toFixed(2);
-
-  updateTargets(teamRank, tot, mainLogged);
-}
-
-function updateTargets(teamRank, tot, mainLogged){
-  const out = document.getElementById("targetsOut");
-  const matchOut = document.getElementById("matchRemaining");
-  if(!(teamRank > 0)){
-    out.textContent = "Select your squad to see remaining requirements.";
-    if(matchOut) matchOut.textContent = "—";
-    return;
-  }
-  const target = parseFloat(document.getElementById("targetTotal").value || "0") || 0;
-  const remaining = Math.max(0, MAIN_MAPS - mainLogged);
-  const needed = Math.max(0, target - tot);
-  const placement = document.getElementById("assumedPlacement").value || "1st";
-
-  if(needed <= 0){
-    out.innerHTML = `✅ On target. Total: <b>${tot.toFixed(2)}</b> / <b>${target.toFixed(0)}</b>`;
-    if(matchOut) matchOut.innerHTML = out.innerHTML;
-    return;
-  }
-  if(remaining === 0){
-    out.innerHTML = `All 6 main maps set. Short by <b>${needed.toFixed(2)}</b> pts — improve using the Reset map.`;
-    if(matchOut) matchOut.innerHTML = out.innerHTML;
-    return;
-  }
-  const perMap = needed / remaining;
-  const killsNeed = minKillsForPoints(perMap, placement, teamRank);
-  out.innerHTML = `Remaining: <b>${needed.toFixed(2)}</b> pts over <b>${remaining}</b> main map(s). Need ~<b>${perMap.toFixed(2)}</b> pts/map ⇒ <b>${killsNeed ?? "—"}</b> kills if you place <b>${placement}</b>.`;
-  if(matchOut) matchOut.innerHTML = out.innerHTML;
-}
-
-function buildDatalist(){
-  const dl = document.getElementById("playersList");
-  dl.innerHTML = "";
-  const addOpt = (name, rank) => {
-    const opt = document.createElement("option");
-    opt.value = name;
-    opt.label = `${name} (${rank})`;
-    dl.appendChild(opt);
-  };
-  addOpt("NONE", 0);
-  for(const r of rankings){ addOpt(r.name, r.rank); }
-}
+function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+function fmt2(x){ return (Number.isFinite(x) ? x : 0).toFixed(2); }
 
 function parseCSVLine(line){
   const out = [];
@@ -482,6 +421,7 @@ async function loadCSV(){
   const text = await r.text();
   const lines = text.replace(/\r/g,"").split("\n").filter(l=>l.trim().length);
   if(!lines.length) throw new Error("rankings.csv is empty");
+
   const headers = parseCSVLine(lines.shift()).map(h=>h.toLowerCase());
   const nameIdx = headers.indexOf("name");
   const rankIdx = headers.indexOf("rank");
@@ -489,6 +429,7 @@ async function loadCSV(){
 
   rankings = [];
   rankByNameLower = new Map();
+
   for(const l of lines){
     const cols = parseCSVLine(l);
     const name = String(cols[nameIdx] ?? "").trim();
@@ -502,18 +443,277 @@ async function loadCSV(){
   buildDatalist();
 }
 
+function buildDatalist(){
+  const dl = document.getElementById("playersList");
+  if(!dl) return;
+  dl.innerHTML = "";
+  const addOpt = (name, rank) => {
+    const opt = document.createElement("option");
+    opt.value = name;
+    opt.label = `${name} (${rank})`;
+    dl.appendChild(opt);
+  };
+  addOpt("NONE", 0);
+  for(const r of rankings){ addOpt(r.name, r.rank); }
+}
+
+function normalizeName(v){
+  return String(v||"").trim();
+}
+
+function computeTeamRank(){
+  const ids = ["p1","p2","p3","p4"];
+  let sum = 0;
+  for(const id of ids){
+    const name = normalizeName(document.getElementById(id).value);
+    if(!name) continue;
+    if(name.toLowerCase() === "none") continue;
+    const r = rankByNameLower.get(name.toLowerCase());
+    if(typeof r === "number") sum += r;
+  }
+  return sum;
+}
+
+/* ===== Scoring ===== */
+function winBonus(kills){
+  // win only; non-stacking: choose the highest tier met
+  for(const t of WIN_BONUS_THRESHOLDS){
+    if(kills >= t.kills) return t.bonus;
+  }
+  return 0;
+}
+
+function gamePoints(kills, placement, teamRank){
+  const div = teamRank / 10;
+  if(!(div > 0)) return 0;
+  const mult = PLACEMENT_MULT[placement] ?? 1.0;
+  const base = (kills * mult) / div;
+  const bonus = (placement === "1st") ? winBonus(kills) : 0;
+  const total = base + bonus;
+  return Math.min(MAX_POINTS_PER_GAME, total);
+}
+
+// brute force minimal kills to reach targetPoints for a single game
+function minKillsForPoints(targetPoints, placement, teamRank){
+  const p = clamp(targetPoints, 0, MAX_POINTS_PER_GAME);
+  if(!(p > 0)) return 0;
+  for(let k=0;k<=500;k++){
+    const pts = gamePoints(k, placement, teamRank);
+    if(pts + 1e-9 >= p) return k;
+  }
+  return null;
+}
+
+/* ===== Best-4 logic ===== */
+function best4(){
+  const sorted = [...games].sort((a,b)=>b.points-a.points);
+  const counted = sorted.slice(0, BEST_COUNTED);
+  const total = counted.reduce((s,g)=>s+g.points,0);
+  return { sorted, counted, total };
+}
+
+/* ===== UI: match list ===== */
+function renderGames(){
+  const host = document.getElementById("games");
+  host.innerHTML = "";
+
+  const { counted } = best4();
+  const countedIds = new Set(counted.map(g=>g.id));
+
+  // newest first for readability
+  const display = [...games].sort((a,b)=>b.id-a.id);
+
+  for(const g of display){
+    const card = document.createElement("div");
+    card.className = "gameCard";
+    const isCounted = countedIds.has(g.id);
+
+    const bonus = (g.placement === "1st") ? winBonus(g.kills) : 0;
+    const mult = PLACEMENT_MULT[g.placement] ?? 1.0;
+
+    card.innerHTML = `
+      <div class="gameTop">
+        <div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <div class="scoreBig">${fmt2(g.points)}</div>
+            <span class="badge ${isCounted ? "counted" : "low"}">${isCounted ? "COUNTED" : "NOT COUNTED"}</span>
+          </div>
+          <div class="gameMeta">
+            Kills: <b>${g.kills}</b> • Place: <b>${g.placement}</b> • Multi: <b>${mult}</b>${bonus ? ` • Win bonus: <b>+${bonus}</b>` : ``}
+          </div>
+        </div>
+        <div class="rowBtns">
+          <button type="button" class="danger" data-del="${g.id}">Delete</button>
+        </div>
+      </div>
+    `;
+    host.appendChild(card);
+  }
+
+  host.querySelectorAll("button[data-del]").forEach(btn=>{
+    btn.addEventListener("click", () => {
+      const id = parseInt(btn.getAttribute("data-del"), 10);
+      games = games.filter(g => g.id !== id);
+      recalc();
+      saveState();
+    });
+  });
+
+  document.getElementById("gamesCount").textContent = String(games.length);
+}
+
+function recalc(){
+  const teamRank = computeTeamRank();
+  document.getElementById("teamRank").textContent = teamRank > 0 ? teamRank.toFixed(2) : "–";
+
+  for(const g of games){
+    g.points = (teamRank > 0) ? gamePoints(g.kills, g.placement, teamRank) : 0;
+  }
+
+  const { total, counted } = best4();
+  document.getElementById("totalOut").textContent = fmt2(total);
+
+  updateTargets(teamRank, total, counted.length);
+  updateReplacement(teamRank, total, counted);
+  renderGames();
+}
+
+/* ===== Targets & replacement ===== */
+function updateTargets(teamRank, total, countedN){
+  const out = document.getElementById("targetsOut");
+  if(!(teamRank > 0)){
+    out.textContent = "Select your squad to see requirements.";
+    return;
+  }
+  const target = parseFloat(document.getElementById("targetTotal").value || "0") || 0;
+  const placement = document.getElementById("assumedPlacement").value || "1st";
+
+  const needed = Math.max(0, target - total);
+  const remainingSlots = Math.max(0, BEST_COUNTED - countedN);
+
+  if(needed <= 0){
+    out.innerHTML = `✅ On target. Total: <b>${fmt2(total)}</b> / <b>${target.toFixed(0)}</b>`;
+    return;
+  }
+
+  if(remainingSlots === 0){
+    out.innerHTML = `You’ve filled the best 4. Short by <b>${fmt2(needed)}</b> pts — use the replacement tool.`;
+    return;
+  }
+
+  const perSlot = needed / remainingSlots;
+  const killsNeed = minKillsForPoints(perSlot, placement, teamRank);
+
+  out.innerHTML =
+    `Remaining: <b>${fmt2(needed)}</b> pts across <b>${remainingSlots}</b> counted slot(s). ` +
+    `Need ~<b>${fmt2(perSlot)}</b> pts/game ⇒ <b>${killsNeed ?? "—"}</b> kills if you place <b>${placement}</b>.`;
+}
+
+function updateReplacement(teamRank, total, counted){
+  const out = document.getElementById("replaceOut");
+  if(!(teamRank > 0)){
+    out.textContent = "Select your squad to unlock.";
+    return;
+  }
+  const placement = document.getElementById("assumedPlacement").value || "1st";
+  const target = parseFloat(document.getElementById("targetTotal").value || "0") || 0;
+
+  if(counted.length < BEST_COUNTED){
+    out.textContent = "Add at least 4 games to unlock.";
+    return;
+  }
+
+  const sortedAsc = [...counted].sort((a,b)=>a.points-b.points);
+  const fourth = sortedAsc[0];
+  const fourthPts = fourth.points;
+
+  const deficit = Math.max(0, target - total);
+
+  if(deficit <= 0){
+    out.innerHTML = `✅ Target met. 4th best is <b>${fmt2(fourthPts)}</b>.`;
+    return;
+  }
+
+  const neededScore = deficit + fourthPts;
+
+  if(neededScore > MAX_POINTS_PER_GAME + 1e-9){
+    const gains = sortedAsc.map(g => MAX_POINTS_PER_GAME - g.points).sort((a,b)=>b-a);
+    let rem = deficit;
+    let reps = 0;
+    for(const gain of gains){
+      if(rem <= 0) break;
+      rem -= Math.max(0, gain);
+      reps += 1;
+    }
+    const can = rem <= 0;
+
+    out.innerHTML =
+      `4th best: <b>${fmt2(fourthPts)}</b>. Short by <b>${fmt2(deficit)}</b> pts.<br>` +
+      `A single replacement would need <b>${fmt2(neededScore)}</b> pts (cap is <b>45</b>).<br>` +
+      (can
+        ? `You likely need ~<b>${reps}</b> replacement game(s) scoring <b>45</b> to hit target.`
+        : `Even replacing all counted games with <b>45</b> won’t reach the target.`);
+    return;
+  }
+
+  const killsNeed = minKillsForPoints(neededScore, placement, teamRank);
+
+  out.innerHTML =
+    `4th best: <b>${fmt2(fourthPts)}</b> (this is what you must beat).<br>` +
+    `To hit target <b>${target.toFixed(0)}</b>, your next counted game needs <b>${fmt2(neededScore)}</b> pts.<br>` +
+    `That’s about <b>${killsNeed ?? "—"}</b> kills if you place <b>${placement}</b>.`;
+}
+
+/* ===== Modal ===== */
+function openModal(){
+  const bg = document.getElementById("modalBg");
+  bg.style.display = "flex";
+  bg.setAttribute("aria-hidden", "false");
+  const k = document.getElementById("modalKills");
+  k.value = "";
+  k.focus();
+}
+function closeModal(){
+  const bg = document.getElementById("modalBg");
+  bg.style.display = "none";
+  bg.setAttribute("aria-hidden", "true");
+}
+
+function addGameFromModal(){
+  const teamRank = computeTeamRank();
+  if(!(teamRank > 0)){
+    alert("Select your squad first.");
+    return;
+  }
+  const raw = String(document.getElementById("modalKills").value ?? "").trim();
+  const kills = raw === "" ? 0 : Math.max(0, parseInt(raw, 10) || 0);
+  const placement = document.getElementById("modalPlace").value || "1st";
+
+  const g = {
+    id: nextId++,
+    kills,
+    placement,
+    points: gamePoints(kills, placement, teamRank)
+  };
+  games.push(g);
+  closeModal();
+  recalc();
+  saveState();
+}
+
+/* ===== persistence ===== */
 function saveState(){
   try{
     const state = {
       savedAt: nowMs(),
       team: { p1: p1.value, p2: p2.value, p3: p3.value, p4: p4.value },
       settings: { assumedPlacement: assumedPlacement.value, targetTotal: targetTotal.value },
-      games: games.map(g=>({ id:g.id, kills:g.kills, placement:g.placement }))
+      games,
+      nextId
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }catch(e){}
 }
-
 function loadState(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -535,23 +735,49 @@ function loadState(){
       if(state.settings.targetTotal !== undefined) targetTotal.value = state.settings.targetTotal;
     }
     if(Array.isArray(state.games)){
-      for(const sg of state.games){
-        const g = games.find(x=>x.id === sg.id);
-        if(!g) continue;
-        if(Number.isFinite(sg.kills)) g.kills = sg.kills;
-        g.placement = sg.placement || "";
-      }
+      games = state.games.map(g=>({
+        id: (typeof g.id === "number" ? g.id : nextId++),
+        kills: Math.max(0, parseInt(String(g.kills ?? 0),10) || 0),
+        placement: (g.placement in PLACEMENT_MULT) ? g.placement : "1st",
+        points: 0
+      }));
     }
+    if(typeof state.nextId === "number" && state.nextId > 0) nextId = state.nextId;
   }catch(e){}
 }
-
 function clearState(){
   try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
 }
 
+/* ===== Boot ===== */
 async function boot(){
-  initGames();
-  renderGames();
+  document.getElementById("addGameBtn").addEventListener("click", openModal);
+  document.getElementById("modalClose").addEventListener("click", closeModal);
+  document.getElementById("modalBg").addEventListener("click", (e)=>{ if(e.target.id==="modalBg") closeModal(); });
+  document.getElementById("modalSave").addEventListener("click", addGameFromModal);
+
+  document.getElementById("assumedPlacement").addEventListener("change", ()=>{ recalc(); saveState(); });
+  document.getElementById("targetTotal").addEventListener("input", ()=>{ recalc(); saveState(); });
+
+  ["p1","p2","p3","p4"].forEach(id=>{
+    document.getElementById(id).addEventListener("input", ()=>{ recalc(); saveState(); });
+    document.getElementById(id).addEventListener("change", ()=>{ recalc(); saveState(); });
+  });
+
+  document.getElementById("resetBtn").addEventListener("click", ()=>{
+    clearState();
+    document.getElementById("p1").value = "";
+    document.getElementById("p2").value = "";
+    document.getElementById("p3").value = "";
+    document.getElementById("p4").value = "";
+    document.getElementById("targetTotal").value = "180";
+    document.getElementById("assumedPlacement").value = "1st";
+    games = [];
+    nextId = 1;
+    recalc();
+    saveState();
+    try{ window.scrollTo({top:0, behavior:"smooth"}); }catch(e){}
+  });
 
   const st = document.getElementById("csvStatus");
   try{
@@ -566,31 +792,8 @@ async function boot(){
   }
 
   loadState();
-  renderGames(); // refresh values from loaded state
   recalc();
 }
-
-document.getElementById("assumedPlacement").addEventListener("change", () => { recalc(); saveState(); });
-document.getElementById("targetTotal").addEventListener("input", () => { recalc(); saveState(); });
-["p1","p2","p3","p4"].forEach(id=>{
-  document.getElementById(id).addEventListener("input", ()=>{ recalc(); saveState(); });
-  document.getElementById(id).addEventListener("change", ()=>{ recalc(); saveState(); });
-});
-
-document.getElementById("resetBtn").addEventListener("click", ()=>{
-  clearState();
-  document.getElementById("p1").value = "";
-  document.getElementById("p2").value = "";
-  document.getElementById("p3").value = "";
-  document.getElementById("p4").value = "";
-  document.getElementById("targetTotal").value = "200";
-  document.getElementById("assumedPlacement").value = "1st";
-  initGames();
-  renderGames();
-  recalc();
-  saveState();
-  try{ window.scrollTo({top:0, behavior:"smooth"}); }catch(e){}
-});
 
 window.addEventListener("DOMContentLoaded", boot);
 })();
