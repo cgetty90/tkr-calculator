@@ -1029,6 +1029,20 @@ function computeTeamRank(){
   }
   return sum;
 }
+function computeTeamSize(){
+  const ids = ["p1","p2","p3","p4"];
+  let count = 0;
+  for(const id of ids){
+    const raw = document.getElementById(id)?.value;
+    const name = normalizeName(raw);
+    if(!name) continue;
+    const key = name.toLowerCase();
+    if(key === "none") continue;
+    if(rankByNameLower.has(key)) count += 1;
+  }
+  return count;
+}
+
 
 /* ===== Rules ===== */
 const BEST_COUNTED = 4;
@@ -1080,7 +1094,12 @@ function winBonus(kills){
 function gamePoints(kills, placement, teamRank){
   const div = teamRank / 10;
   if(!(div > 0)) return 0;
-  const mult = PLACEMENT_MULT[placement] ?? 1.0;
+  let mult = PLACEMENT_MULT[placement] ?? 1.0;
+  if(placement === "1st"){
+    const teamSize = computeTeamSize();
+    if(teamSize === 3) mult = 2.4;
+    else if(teamSize === 2) mult = 2.5;
+  }
   const base = (kills * mult) / div;
   const bonus = (placement === "1st") ? winBonus(kills) : 0;
   const total = base + bonus;
