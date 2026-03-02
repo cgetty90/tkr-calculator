@@ -671,7 +671,29 @@ button:hover{
       .playerInput{ display:none; }
       .playerSelect{ display:block; }
     }
-  </style>
+  
+
+/* Mobile modal fixes */
+@media (max-width: 700px){
+  .backdrop{
+    align-items:flex-start;
+    overflow:auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .modal{
+    margin-top:12px;
+    max-height: calc(100vh - 24px);
+    overflow:auto;
+  }
+  /* prevent iOS zoom on focus */
+  input, select, button{
+    font-size:16px;
+  }
+  .grid-4{
+    grid-template-columns: 1fr;
+  }
+}
+</style>
 </head>
 <body>
 <div class="topbar">
@@ -849,24 +871,25 @@ button:hover{
 
     <div class="spacer10"></div>
     <div class="muted">Pick up to 4 players. Use <b>NONE</b> for empty slots.</div>
+    <datalist id="playersList"></datalist>
     <div class="spacer10"></div>
 
     <div class="grid grid-2">
       <div>
         <label>Player 1</label>
-        <select class="selectNative" id="sq1"></select>
+        <input class="selectNative" id="sq1" list="playersList" placeholder="Type player name or NONE" type="text"/>
       </div>
       <div>
         <label>Player 2</label>
-        <select class="selectNative" id="sq2"></select>
+        <input class="selectNative" id="sq2" list="playersList" placeholder="Type player name or NONE" type="text"/>
       </div>
       <div>
         <label>Player 3</label>
-        <select class="selectNative" id="sq3"></select>
+        <input class="selectNative" id="sq3" list="playersList" placeholder="Type player name or NONE" type="text"/>
       </div>
       <div>
         <label>Player 4</label>
-        <select class="selectNative" id="sq4"></select>
+        <input class="selectNative" id="sq4" list="playersList" placeholder="Type player name or NONE" type="text"/>
       </div>
     </div>
 
@@ -1104,29 +1127,29 @@ function setupDesktopAutocomplete(){
 }
 
 function buildSquadModalSelects(){
-  const ids = ["sq1","sq2","sq3","sq4"];
-  for(const id of ids){
-    const sel = document.getElementById(id);
-    if(!sel) continue;
-    const current = sel.value;
-    sel.innerHTML = "";
-    const optNone = document.createElement("option");
-    optNone.value = "NONE";
-    optNone.textContent = "NONE";
-    sel.appendChild(optNone);
+  // Mobile-friendly: use datalist-backed text inputs so users can type names on phones
+  const list = document.getElementById("playersList");
+  if(list){
+    const currentValues = Array.from(list.querySelectorAll("option")).map(o=>o.value);
+    // Rebuild only if rankings changed / list empty
+    if(!currentValues.length){
+      list.innerHTML = "";
+      const noneOpt = document.createElement("option");
+      noneOpt.value = "NONE";
+      noneOpt.label = "NONE";
+      list.appendChild(noneOpt);
 
-    for(const r of rankings){
-      const o = document.createElement("option");
-      o.value = r.name;
-      o.textContent = `${r.name} (${r.rank})`;
-      sel.appendChild(o);
+      for(const r of rankings){
+        const o = document.createElement("option");
+        o.value = r.name;
+        o.label = `${r.name} (${r.rank})`;
+        list.appendChild(o);
+      }
     }
-    // restore if possible
-    if(current) sel.value = current;
   }
 }
 
-function openSquadModal(){
+function openSquadModal()){
   const bg = document.getElementById("squadModalBg");
   if(!bg) return;
   bg.style.display = "flex";
