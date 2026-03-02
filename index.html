@@ -533,6 +533,13 @@ button:hover{
       grid-template-columns: repeat(5, minmax(0,1fr));
       gap:12px;
       margin: 6px 0 18px 0;
+
+      /* Keep key stats visible while scrolling */
+      position: sticky;
+      top: 12px;
+      z-index: 50;
+      padding: 6px 0;
+      backdrop-filter: blur(10px);
     }
     .statCard{
       background: linear-gradient(180deg, rgba(18,22,46,.65), rgba(8,10,20,.72));
@@ -1143,6 +1150,20 @@ function closeSquadModal(){
 
 function applySquadFromModal(){
   const map = [["sq1","p1"],["sq2","p2"],["sq3","p3"],["sq4","p4"]];
+  // Prevent duplicates (blank / NONE allowed)
+  const picked = map.map(([sid])=>{
+    const sel = document.getElementById(sid);
+    return normalizeName(sel ? (sel.value || "") : "");
+  }).filter(v=>v && v.toLowerCase()!=="none");
+  const seen = new Set();
+  for(const n of picked){
+    const k = n.toLowerCase();
+    if(seen.has(k)){
+      alert("Duplicate player names aren’t allowed. Please pick each player once (use NONE for empty slots).");
+      return;
+    }
+    seen.add(k);
+  }
   for(const [sid,pid] of map){
     const sel = document.getElementById(sid);
     const val = sel ? (sel.value || "NONE") : "NONE";
@@ -1355,7 +1376,7 @@ function updatePlayerStats(){
             <th style="padding:8px 6px;">Rank</th>
             <th style="padding:8px 6px;">Kills</th>
             <th style="padding:8px 6px;">Expected</th>
-            <th style="padding:8px 6px;">% Met</th>
+            <th style="padding:8px 6px;">Contribution</th>
             <th style="padding:8px 6px;">Status</th>
           </tr>
         </thead>
@@ -1368,7 +1389,14 @@ function updatePlayerStats(){
                 <td style="padding:8px 6px; color:rgba(246,247,255,.70);">${fmt2(r.rank)}</td>
                 <td style="padding:8px 6px;">${Math.round(r.actual)}</td>
                 <td style="padding:8px 6px; color:rgba(246,247,255,.70);">${fmt2(r.expected)}</td>
-                <td style="padding:8px 6px;">${Math.round(pct*100)}%</td>
+                <td style="padding:8px 6px; min-width:180px;">
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <div style="flex:1; height:10px; border-radius:999px; background:rgba(255,255,255,.10); overflow:hidden;">
+                      <div style="height:100%; width:${Math.min(200, Math.max(0, pct*100))}%; background:linear-gradient(90deg, rgba(77,232,255,.95), rgba(0,255,166,.90)); box-shadow:0 0 16px rgba(77,232,255,.12);"></div>
+                    </div>
+                    <div style="width:52px; text-align:right;">${Math.round(pct*100)}%</div>
+                  </div>
+                </td>
                 <td style="padding:8px 6px;">${badge(pct)}</td>
               </tr>
             `;
@@ -1589,6 +1617,14 @@ function openModal(){
   bg.style.display = "flex";
   bg.setAttribute("aria-hidden", "false");
 
+  // Update per-player kill placeholders to use current squad names
+  for(let i=1;i<=4;i++){
+    const name = String(document.getElementById("p"+i)?.value ?? "").trim();
+    const ph = name ? `${name} kills` : `P${i} kills`;
+    const el = document.getElementById("modalK"+i);
+    if(el) el.setAttribute("placeholder", ph);
+  }
+
   ["modalK1","modalK2","modalK3","modalK4"].forEach(id=>{
     const el = document.getElementById(id);
     if(el) el.value = "";
@@ -1625,19 +1661,49 @@ function addGameFromModal(){
 
   const placement = document.getElementById("modalPlace").value || "1st";
 
-  const kVals = ["modalK1","modalK2","modalK3","modalK4"].map(id=>{
-    const raw = String(document.getElementById(id)?.value ?? "").trim();
-    return raw === "" ? 0 : Math.max(0, parseInt(raw, 10) || 0);
-  });
-  const kills = kVals.reduce((s,n)=>s+n,0);
-
-  // Snapshot who was in the squad for this game (for player stats)
+  // Read current squad (names can be blank / NONE)
   const slotIds = ["p1","p2","p3","p4"];
-  const players = slotIds.map((pid, i)=>{
+  const squadNow = slotIds.map(pid=>{
     const name = normalizeName(document.getElementById(pid)?.value);
     const key = name.toLowerCase();
     const rank = (name && key !== "none") ? (rankByNameLower.get(key) ?? 0) : 0;
-    return { slot: pid, name: (name || "NONE"), rank, kills: kVals[i] };
+    return { name, key, rank };
+  });
+
+  // Prevent duplicates among named players
+  {
+    const seen = new Set();
+    for(const p of squadNow){
+      if(!p.name || p.key==="none") continue;
+      if(seen.has(p.key)){
+        alert("Duplicate player names aren’t allowed in the squad. Please fix the squad first.");
+        return;
+      }
+      seen.add(p.key);
+    }
+  }
+
+  // Kills: required when a player name exists; optional when slot is blank/NONE
+  const killInputs = ["modalK1","modalK2","modalK3","modalK4"];
+  const kVals = killInputs.map((id, i)=>{
+    const raw = String(document.getElementById(id)?.value ?? "").trim();
+    const p = squadNow[i];
+    const hasPlayer = !!(p.name && p.key !== "none");
+    if(hasPlayer && raw === ""){
+      alert(`Please enter kills for ${p.name}. (Leave the player slot blank/NONE if they didn\'t play.)`);
+      return null;
+    }
+    if(raw === "") return 0;
+    const n = Math.max(0, parseInt(raw, 10) || 0);
+    return n;
+  });
+  if(kVals.some(v=>v===null)) return;
+  const kills = kVals.reduce((s,n)=>s+n,0);
+
+  // Snapshot who was in the squad for this game (for player stats)
+  const players = ["p1","p2","p3","p4"].map((pid, i)=>{
+    const p = squadNow[i] || { name:"", key:"none", rank:0 };
+    return { slot: pid, name: (p.name || "NONE"), rank: (p.rank||0), kills: kVals[i] };
   });
 
   const g = {
