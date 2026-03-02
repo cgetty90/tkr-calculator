@@ -870,7 +870,7 @@ button:hover{
     </div>
 
     <div class="spacer10"></div>
-    <div class="muted">Pick up to 4 players. Use <b>NONE</b> for empty slots.</div>
+    <div class="muted">Pick up to 4 players. Leave blank for empty slots (they'll be saved as <b>NULL</b>).</div>
     <datalist id="playersList"></datalist>
     <div class="spacer10"></div>
 
@@ -914,16 +914,16 @@ button:hover{
 <div style="grid-column: 1 / -1;">
   <label>Player kills (we’ll auto-sum squad kills)</label>
   <div class="grid grid-4">
-    <div>
+    <div id="modalKWrap1">
       <input class="playerInput" id="modalK1" inputmode="numeric" min="0" placeholder="P1 kills" step="1" type="number"/>
     </div>
-    <div>
+    <div id="modalKWrap2">
       <input class="playerInput" id="modalK2" inputmode="numeric" min="0" placeholder="P2 kills" step="1" type="number"/>
     </div>
-    <div>
+    <div id="modalKWrap3">
       <input class="playerInput" id="modalK3" inputmode="numeric" min="0" placeholder="P3 kills" step="1" type="number"/>
     </div>
-    <div>
+    <div id="modalKWrap4">
       <input class="playerInput" id="modalK4" inputmode="numeric" min="0" placeholder="P4 kills" step="1" type="number"/>
     </div>
   </div>
@@ -1159,8 +1159,9 @@ function openSquadModal(){
   const map = [["sq1","p1"],["sq2","p2"],["sq3","p3"],["sq4","p4"]];
   for(const [sid,pid] of map){
     const sel = document.getElementById(sid);
-    const v = normalizeName(document.getElementById(pid)?.value) || "NONE";
-    if(sel) sel.value = v || "NONE";
+    const vRaw = normalizeName(document.getElementById(pid)?.value);
+    const v = (!vRaw || ["none","null"].includes(vRaw.toLowerCase())) ? "" : vRaw;
+    if(sel) sel.value = v;
   }
 }
 
@@ -1177,19 +1178,20 @@ function applySquadFromModal(){
   const picked = map.map(([sid])=>{
     const sel = document.getElementById(sid);
     return normalizeName(sel ? (sel.value || "") : "");
-  }).filter(v=>v && v.toLowerCase()!=="none");
+  }).filter(v=>v && !["none","null"].includes(v.toLowerCase()));
   const seen = new Set();
   for(const n of picked){
     const k = n.toLowerCase();
     if(seen.has(k)){
-      alert("Duplicate player names aren’t allowed. Please pick each player once (use NONE for empty slots).");
+      alert("Duplicate player names aren’t allowed. Please pick each player once (leave blanks for empty slots).");
       return;
     }
     seen.add(k);
   }
   for(const [sid,pid] of map){
     const sel = document.getElementById(sid);
-    const val = sel ? (sel.value || "NONE") : "NONE";
+    const raw = normalizeName(sel ? (sel.value || "") : "");
+    const val = (!raw || ["none","null"].includes(raw.toLowerCase())) ? "NULL" : raw;
     const input = document.getElementById(pid);
     if(input) input.value = val;
 
@@ -1206,7 +1208,7 @@ function applySquadFromModal(){
 function updateSquadSummary(){
   const ids = ["p1","p2","p3","p4"];
   const names = ids.map(id=>normalizeName(document.getElementById(id)?.value)).filter(Boolean);
-  const clean = names.filter(n=>n.toLowerCase() !== "none");
+  const clean = names.filter(n=>!["none","null"].includes(n.toLowerCase()));
   const out = document.getElementById("squadSummary");
   if(!out) return;
   if(!clean.length){
@@ -1223,7 +1225,7 @@ function computeTeamRank(){
   for(const id of ids){
     const name = normalizeName(document.getElementById(id)?.value);
     if(!name) continue;
-    if(name.toLowerCase() === "none") continue;
+    if(["none","null"].includes(name.toLowerCase())) continue;
     const r = rankByNameLower.get(name.toLowerCase());
     if(typeof r === "number") sum += r;
   }
@@ -1237,7 +1239,7 @@ function computeTeamSize(){
     const name = normalizeName(raw);
     if(!name) continue;
     const key = name.toLowerCase();
-    if(key === "none") continue;
+    if(["none","null"].includes(key)) continue;
     if(rankByNameLower.has(key)) count += 1;
   }
   return count;
@@ -1334,9 +1336,9 @@ function updatePlayerStats(){
   const squad = slotIds.map(pid=>{
     const name = normalizeName(document.getElementById(pid)?.value);
     const key = name.toLowerCase();
-    const rank = (name && key !== "none") ? (rankByNameLower.get(key) ?? 0) : 0;
+    const rank = (name && !["none","null"].includes(key)) ? (rankByNameLower.get(key) ?? 0) : 0;
     return { slot: pid, name, rank };
-  }).filter(p=>p.name && p.name.toLowerCase()!=="none" && p.rank>0);
+  }).filter(p=>p.name && !["none","null"].includes(p.name.toLowerCase()) && p.rank>0);
 
   if(!squad.length || !(teamRank > 0) || games.length===0){
     out.textContent = "Build a squad and add games to see stats.";
@@ -1364,7 +1366,7 @@ function updatePlayerStats(){
     for(const p of players){
       const name = String(p.name||"").trim();
       const key = name.toLowerCase();
-      if(!name || key==="none") continue;
+      if(!name || ["none","null"].includes(key)) continue;
       const rank = (typeof p.rank === "number" && p.rank>0) ? p.rank : (rankByNameLower.get(key) ?? 0);
       if(!(rank > 0)) continue;
       const row = ensure({name, rank});
@@ -1640,22 +1642,25 @@ function openModal(){
   bg.style.display = "flex";
   bg.setAttribute("aria-hidden", "false");
 
-  // Update per-player kill placeholders to use current squad names
+  // Update per-player kill inputs to match current squad (hide empty slots)
   for(let i=1;i<=4;i++){
-    const name = String(document.getElementById("p"+i)?.value ?? "").trim();
-    const ph = name ? `${name} kills` : `P${i} kills`;
+    const nameRaw = String(document.getElementById("p"+i)?.value ?? "").trim();
+    const key = nameRaw.toLowerCase();
+    const active = !!(nameRaw && !["none","null"].includes(key));
+    const wrap = document.getElementById("modalKWrap"+i);
     const el = document.getElementById("modalK"+i);
-    if(el) el.setAttribute("placeholder", ph);
+    if(wrap) wrap.style.display = active ? "" : "none";
+    if(el){
+      el.value = "";
+      if(active){
+        el.setAttribute("placeholder", `${nameRaw} kills`);
+      }
+    }
   }
-
-  ["modalK1","modalK2","modalK3","modalK4"].forEach(id=>{
-    const el = document.getElementById(id);
-    if(el) el.value = "";
-  });
   updateModalKillsSum();
 
-  const k1 = document.getElementById("modalK1");
-  if(k1) k1.focus();
+  const first = [1,2,3,4].map(i=>document.getElementById("modalK"+i)).find(el=>el && (document.getElementById("modalKWrap"+el.id.replace("modalK",""))?.style.display!=="none"));
+  if(first) first.focus();
 }
 function closeModal(){
   const bg = document.getElementById("modalBg");
@@ -1664,7 +1669,10 @@ function closeModal(){
 }
 
 function updateModalKillsSum(){
-  const sum = ["modalK1","modalK2","modalK3","modalK4"].reduce((acc,id)=>{
+  const sum = [1,2,3,4].reduce((acc,i)=>{
+    const wrap = document.getElementById("modalKWrap"+i);
+    if(wrap && wrap.style.display === "none") return acc;
+    const id = "modalK"+i;
     const raw = String(document.getElementById(id)?.value ?? "").trim();
     const n = raw === "" ? 0 : Math.max(0, parseInt(raw, 10) || 0);
     return acc + n;
@@ -1689,7 +1697,7 @@ function addGameFromModal(){
   const squadNow = slotIds.map(pid=>{
     const name = normalizeName(document.getElementById(pid)?.value);
     const key = name.toLowerCase();
-    const rank = (name && key !== "none") ? (rankByNameLower.get(key) ?? 0) : 0;
+    const rank = (name && !["none","null"].includes(key)) ? (rankByNameLower.get(key) ?? 0) : 0;
     return { name, key, rank };
   });
 
@@ -1697,7 +1705,7 @@ function addGameFromModal(){
   {
     const seen = new Set();
     for(const p of squadNow){
-      if(!p.name || p.key==="none") continue;
+      if(!p.name || ["none","null"].includes(p.key)) continue;
       if(seen.has(p.key)){
         alert("Duplicate player names aren’t allowed in the squad. Please fix the squad first.");
         return;
@@ -1711,7 +1719,7 @@ function addGameFromModal(){
   const kVals = killInputs.map((id, i)=>{
     const raw = String(document.getElementById(id)?.value ?? "").trim();
     const p = squadNow[i];
-    const hasPlayer = !!(p.name && p.key !== "none");
+    const hasPlayer = !!(p.name && !["none","null"].includes(p.key));
     if(hasPlayer && raw === ""){
       alert(`Please enter kills for ${p.name}. (Leave the player slot blank/NONE if they didn\'t play.)`);
       return null;
@@ -1726,7 +1734,7 @@ function addGameFromModal(){
   // Snapshot who was in the squad for this game (for player stats)
   const players = ["p1","p2","p3","p4"].map((pid, i)=>{
     const p = squadNow[i] || { name:"", key:"none", rank:0 };
-    return { slot: pid, name: (p.name || "NONE"), rank: (p.rank||0), kills: kVals[i] };
+    return { slot: pid, name: (p.name || "NULL"), rank: (p.rank||0), kills: kVals[i] };
   });
 
   const g = {
