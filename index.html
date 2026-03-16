@@ -833,7 +833,7 @@ button:hover{
 <div>
 <label>Target total score (best 4)</label>
 <input id="targetTotal" min="0" step="any" type="number" value="180" inputmode="decimal" />
-<div class="muted" style="margin-top:6px;">Max per game: <b>45</b>. Counted: <b>best 4</b>.</div>
+<div class="muted" style="margin-top:6px;">Max per game: <b>35</b>. Counted: <b>best 4</b>.</div>
 </div>
 </div>
 <div class="spacer10"></div>
@@ -852,7 +852,7 @@ button:hover{
 <div>
 <div class="card">
 <h3>MATCH LOG</h3>
-<div class="muted">Add as many games as you want. Only the <b>best 4</b> count (each capped at <b>45</b>).</div>
+<div class="muted">Add as many games as you want. Only the <b>best 4</b> count (each capped at <b>35</b>).</div>
 <div class="spacer10"></div>
 <button id="addGameBtn" type="button">Add game</button>
 <div class="gamesList" id="games"></div>
@@ -953,7 +953,7 @@ button:hover{
 <button id="modalSave" type="button">Save game</button>
 <div class="spacer10"></div>
 <div class="muted">
-        Scoring: <b>kills × placement</b> ÷ <b>(rank/10)</b>, then <b>WIN kill bonus</b> (non-stacking), cap at <b>45</b>.
+        Scoring: <b>kills × placement</b> ÷ <b>(rank/10)</b>, then <b>WIN kill bonus</b> (non-stacking), cap at <b>35</b>.
       </div>
 </div>
 </div>
@@ -1254,7 +1254,7 @@ function computeTeamSize(){
 
 /* ===== Rules ===== */
 const BEST_COUNTED = 4;
-const MAX_POINTS_PER_GAME = 45;
+const MAX_POINTS_PER_GAME = 35;
 
 const PLACEMENT_MULT = {
   "1st": 2.25,
@@ -1268,12 +1268,12 @@ const PLACEMENT_MULT = {
 
 // Win-only, non-stacking bonus points (applied AFTER division)
 const WIN_BONUS_THRESHOLDS = [
-  { kills: 85, bonus: 6 },
-  { kills: 82, bonus: 5 },
-  { kills: 78, bonus: 4 },
-  { kills: 74, bonus: 3 },
-  { kills: 70, bonus: 2 },
-  { kills: 60, bonus: 1 }
+  { kills: 85, bonus: 0 },
+  { kills: 82, bonus: 0 },
+  { kills: 78, bonus: 0 },
+  { kills: 74, bonus: 0 },
+  { kills: 70, bonus: 0 },
+  { kills: 60, bonus: 0 }
 ];
 
 /* ===== Games =====
@@ -1627,10 +1627,10 @@ function updateReplacement(teamRank, total, counted){
 
     out.innerHTML =
       `4th best: <b>${fmt2(fourthPts)}</b>. Short by <b>${fmt2(deficit)}</b> pts.<br>` +
-      `A single replacement would need <b>${fmt2(neededScore)}</b> pts (cap is <b>45</b>).<br>` +
+      `A single replacement would need <b>${fmt2(neededScore)}</b> pts (cap is <b>35</b>).<br>` +
       (can
-        ? `You likely need ~<b>${reps}</b> replacement game(s) scoring <b>45</b> to hit target.`
-        : `Even replacing all counted games with <b>45</b> won’t reach the target.`);
+        ? `You likely need ~<b>${reps}</b> replacement game(s) scoring <b>35</b> to hit target.`
+        : `Even replacing all counted games with <b>35</b> won’t reach the target.`);
     return;
   }
 
