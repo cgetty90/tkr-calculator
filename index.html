@@ -953,7 +953,7 @@ button:hover{
 <button id="modalSave" type="button">Save game</button>
 <div class="spacer10"></div>
 <div class="muted">
-        Scoring: <b>kills × placement</b> ÷ <b>(rank/10)</b>, then <b>WIN kill bonus</b> (non-stacking), cap at <b>35</b>.
+        Scoring: <b>kills × placement</b> ÷ <b>(rank/10)</b>, then <b>milestone bonus</b> (non-stacking, any placement), cap at <b>35</b>.
       </div>
 </div>
 </div>
@@ -1266,7 +1266,7 @@ const PLACEMENT_MULT = {
   "11+": 0.75
 };
 
-// Win-only, non-stacking bonus points (applied AFTER division)
+// Non-stacking milestone bonus points (applied AFTER division on any placement)
 const WIN_BONUS_THRESHOLDS = [
   { kills: 85, bonus: 0 },
   { kills: 82, bonus: 0 },
@@ -1292,7 +1292,7 @@ function escapeHtml(str){
 
 /* ===== Scoring ===== */
 function winBonus(kills){
-  // win only; non-stacking: choose the highest tier met
+  // non-stacking: choose the highest tier met
   for(const t of WIN_BONUS_THRESHOLDS){
     if(kills >= t.kills) return t.bonus;
   }
@@ -1302,14 +1302,9 @@ function winBonus(kills){
 function gamePoints(kills, placement, teamRank){
   const div = teamRank / 10;
   if(!(div > 0)) return 0;
-  let mult = PLACEMENT_MULT[placement] ?? 1.0;
-  if(placement === "1st"){
-    const teamSize = computeTeamSize();
-    if(teamSize === 3) mult = 2.4;
-    else if(teamSize === 2) mult = 2.5;
-  }
+  const mult = PLACEMENT_MULT[placement] ?? 1.0;
   const base = (kills * mult) / div;
-  const bonus = (placement === "1st") ? winBonus(kills) : 0;
+  const bonus = winBonus(kills);
   const total = base + bonus;
   return Math.min(MAX_POINTS_PER_GAME, total);
 }
@@ -1458,7 +1453,7 @@ function renderGames(){
     card.className = "gameCard";
     const isCounted = countedIds.has(g.id);
 
-    const bonus = (g.placement === "1st") ? winBonus(g.kills) : 0;
+    const bonus = winBonus(g.kills);
     const mult = PLACEMENT_MULT[g.placement] ?? 1.0;
 
     card.innerHTML = `
@@ -1469,7 +1464,7 @@ function renderGames(){
             <span class="badge ${isCounted ? "counted" : "low"}">${isCounted ? "COUNTED" : "NOT COUNTED"}</span>
           </div>
           <div class="gameMeta">
-            Kills: <b>${g.kills}</b> • Place: <b>${g.placement}</b> • Multi: <b>${mult}</b>${bonus ? ` • Win bonus: <b>+${bonus}</b>` : ``}
+            Kills: <b>${g.kills}</b> • Place: <b>${g.placement}</b> • Multi: <b>${mult}</b>${bonus ? ` • Milestone bonus: <b>+${bonus}</b>` : ``}
           </div>
         </div>
         <div class="rowBtns">
